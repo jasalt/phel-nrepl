@@ -1,0 +1,143 @@
+(ns phel-nrepl\nrepl
+  (:require phel\str :as str)
+  (:require jasalt\bencode :as bencode)
+  (:require phel-nrepl\util :refer [callable->closure
+                                    phel-eval])
+  )
+
+## Nrepl server for Phel (WIP)
+
+(comment
+  (bencode/encode [123 345 "asfd" {:foo (set :asdf 123 "FOO")}])
+  (bencode/decode "li123ei345e4:asfdd3:fool4:asdfi123e3:FOOeee")
+  )
+
+
+(def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
+(php/-> log-handler (setFormatter (php/new \Amp\Log\ConsoleFormatter)))
+
+(def logger (php/new \Monolog\Logger "server"))
+(php/-> logger (pushHandler log-handler))
+
+## http://seldaek.github.io/monolog/doc/01-usage.html
+(defn log-debug [s]
+  (php/-> logger (debug (str s))))
+(defn log-info [s]
+  (php/-> logger (info (str s))))
+(defn log-warning [s]
+  (php/-> logger (warning (str s))))
+(defn log-error [s]
+  (php/-> logger (error (str s))))
+
+
+(def server (php/amp\socket\listen "127.0.0.1:8888"))
+(def address (php/-> server (getAddress)))
+
+(log-info (str "Listening for new connections on " (php/-> server (getAddress))))
+(log-info "Connect from a terminal, e.g. ")
+(log-info (str "nc " (php/-> address (getAddress)) (php/-> address (getPort))))
+
+
+## TODO transport to handler
+
+(defn handle-clone [decoded]
+  (bencode/encode {:foo 123}))
+
+(declare ops)
+
+(defn handle-describe [request send-fn]
+  (let [phel-version 1
+        php-version 2]
+    (send-fn request {"versions"
+                      {"phel" (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
+                                  "php" (php/phpversion)                                                                                 }
+                      "ops" (map name (keys ops))
+                      "status" ["done"]})))
+
+## d2:op8:describee
+
+## resp id, resp done
+(defn handle-eval [request send-fn]
+  (let [eval-res (phel-eval (get request :code))
+        resp {:value eval-res :status ["done"]}]
+    (send-fn request resp)
+    )
+  )
+
+## d4:code7:(+ 1 1)2:op4:evale
+
+
+## (defn handle-interrupt [decoded]
+##   (bencode/encode {:bar 456}))
+
+
+(def ops
+  "A map of operations supported by the nREPL server (as keywords) to function
+  handlers for those operations."
+  {:eval      handle-eval      # WIP
+   :clone     handle-clone     # TODO
+   :describe  handle-describe  # DONE
+   ## :info      handle-lookup     # cider-nrepl middleware
+   ## :eldoc     handle-lookup     # cider-nrepl middleware
+   ## :close     handle-close
+   ## :load-file handle-load-file
+   ## :complete  handle-complete
+   ## :macroexpand handle-macroexpand
+   ## :classpath handle-classpath
+   })
+
+
+(defn- make-send-fn [socket]
+  (fn [_request response]
+    (log-debug (str "request: " _request " response keys: " (keys response)))
+    (try
+      (php/-> socket (write (str (bencode/encode response) "\n")))  # \n added (for clarity)
+      (catch \Exception e
+        (log-error (str "make-send-fn ERROR: " e))))
+    )
+  )
+
+
+(defn- handle-request [request send-fn]
+  (let [op (get request :op)
+        op-fn (get ops (keyword op))]  # keyword conversion added here
+    (if op-fn
+      (op-fn request send-fn)
+      (do
+        (log-warning (str "Unhandled operation" op))
+        (send-fn request {"status" ["error" "unknown-op" "done"]}))
+      )
+    )
+  )
+
+(loop []
+  (let [socket (php/-> server (accept))]
+    (when socket
+      (php/amp\async
+       (callable->closure
+        (fn []
+          (let [client-address (php/-> socket (getRemoteAddress))
+                client-ip      (php/-> client-address (getAddress)) # ->getHost(); # not found, docs have issue?
+                client-port    (php/-> client-address (getPort))
+                server-address (php/-> address (getAddress))
+                nrepl-server-signature (str "nREPL server started on port 8888 on host "
+                                            server-address " - nrepl://" server-address ":8888" "\n")
+                send-fn (make-send-fn socket)]
+
+            (log-info (str "accepted connection from " address))
+            (php/-> socket (write nrepl-server-signature))
+
+            (dofor [line-raw :in (php/amp\bytestream\splitlines socket)]
+                   ## (log-info (str "processing " line-raw))
+                   (let [line (php/trim line-raw)]
+                     (when-not (= line "")
+                       (try
+                         (handle-request (bencode/decode line) send-fn)  # line = request
+                         (catch
+                             \Exception e (log-error (str "loop error: " e))))
+                       )
+                     )
+                   )
+            (php/-> socket (end)))
+          )))
+      (recur))))

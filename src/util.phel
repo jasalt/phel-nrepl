@@ -1,0 +1,37 @@
+(ns phel-nrepl\util)
+
+(defn dd
+  "Dump and die."
+  [x]
+  (println x)(php/die))
+
+(defn get-from-list [xs key default & [split]]
+  (let [arg (find |(php/str_contains (or $ "") key) xs)]
+    (if (empty? arg)
+      default
+      (php/intval (get (php/explode (or split "=") arg) 1)))))
+
+(defn callable->closure
+  "Converts callable such as Phel\Lang\AbstractFn into a closure that is often
+  expected by AMPHP"
+  [phel-fn]
+  (php/:: \Closure (fromCallable phel-fn)))
+
+(defn show-user-defined
+  "List 'user' definitions to see which \Amp functions are available.
+   AFAIK Phel does not have syntax for requiring them explicitly in ns form e.g. from:
+   https://github.com/amphp/amp/blob/7cf7fef3d667bfe4b2560bc87e67d5387a7bcde9/src/functions.php"
+  []
+  (php/aget (php/get_defined_functions) "user"))
+
+(defn phel-compile [s]
+  (let [cf (php/new \Phel\Compiler\CompilerFacade)
+        opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
+        res (php/-> cf (compile s opts))]
+    (php/-> res (getPhpCode))))
+
+
+(defn phel-eval [s]
+  (let [opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
+        rf (php/new \Phel\Run\RunFacade)]
+  (php/-> rf (eval s opts))))
