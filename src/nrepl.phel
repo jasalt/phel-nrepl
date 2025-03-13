@@ -80,26 +80,38 @@
 
 (defn handle-apropos [request send-fn]  # WIP
   (let [matching-defs (apropos (get request :prefix))
-        resp {:completions completions :status ["done"]}]
+        resp {:completions matching-defs :status ["done"]}]
     (send-fn request resp)
     )
   )
 
+(defn handle-macroexpand
+  "fake macroexpand, compiling expr to PHP"
+  [request send-fn]
+  (let [result (compile (read-string (get request :code)))
+        resp {:expansion result :status ["done"]}]
+    (send-fn request resp)
+    )
+  )
+
+## (bencode/encode {:op "macroexpand" :code "(def foo 1)"})
+## d4:code11:(def foo 1)2:op11:macroexpande
 
 (def ops
   "A map of operations supported by the nREPL server (as keywords) to function
   handlers for those operations."
-  {:eval      handle-eval      # WIP
-   :clone     handle-clone     # TODO
-   :complete  handle-complete
-   :describe  handle-describe  # DONE
+  {:eval        handle-eval      # WIP
+   :clone       handle-clone     # TODO
+   :complete    handle-complete
+   :describe    handle-describe  # DONE
    ## :apropos   handle-apropos # WIP
+   :macroexpand handle-macroexpand
 
    ## :info      handle-lookup     # cider-nrepl middleware
    ## :eldoc     handle-lookup     # cider-nrepl middleware
+
    ## :close     handle-close
    ## :load-file handle-load-file
-   ## :macroexpand handle-macroexpand
    ## :classpath handle-classpath
    })
 
