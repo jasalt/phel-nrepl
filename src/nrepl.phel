@@ -36,13 +36,16 @@
 
 (log-info (str "Listening for new connections on " (php/-> server (getAddress))))
 (log-info "Connect from a terminal, e.g. ")
-(log-info (str "nc " (php/-> address (getAddress)) (php/-> address (getPort))))
+(log-info (str "nc " (php/-> address (getAddress)) ":" (php/-> address (getPort))))
 
 
 ## TODO transport to handler
 
-(defn handle-clone [decoded]
-  (bencode/encode {:foo 123}))
+(defn handle-clone [request send-fn]
+  (let [resp {:new-session 99 :status ["done"]}]
+    (send-fn request resp)
+    )
+  )
 
 (declare ops)
 
@@ -97,6 +100,11 @@
 ## (bencode/encode {:op "macroexpand" :code "(def foo 1)"})
 ## d4:code11:(def foo 1)2:op11:macroexpande
 
+## (defn handle-load-file []
+##   ## https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L285
+##   []
+##   )
+
 (def ops
   "A map of operations supported by the nREPL server (as keywords) to function
   handlers for those operations."
@@ -104,13 +112,15 @@
    :clone       handle-clone     # TODO
    :complete    handle-complete
    :describe    handle-describe  # DONE
-   ## :apropos   handle-apropos # WIP
    :macroexpand handle-macroexpand
+
+   ## :apropos   handle-apropos # WIP
 
    ## :info      handle-lookup     # cider-nrepl middleware
    ## :eldoc     handle-lookup     # cider-nrepl middleware
 
    ## :close     handle-close
+
    ## :load-file handle-load-file
    ## :classpath handle-classpath
    })
@@ -161,9 +171,10 @@
                    (let [line (php/trim line-raw)]
                      (when-not (= line "")
                        (try
+                         (log-debug (str "RECEIVED: " line))
                          (handle-request (bencode/decode line) send-fn)  # line = request
                          (catch
-                             \Exception e (log-error (str "loop error: " e))))
+                             \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
                        )
                      )
                    )

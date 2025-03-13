@@ -161,8 +161,11 @@
 
 # (compile '(defn foo [x] x))
 
-# TODO nREPL expected formatting
+## TODO nREPL expected formatting
+
 ## https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#apropos
+## https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L176
+
 (defn- apropos [what]
   (let [phel-defs (all-phel-def-names)
         matching-phel-defs (filter (partialr php/str_contains what) phel-defs)
@@ -177,6 +180,9 @@
      (map (fn [def] (-> (make-definition def "function" "function")
                       (put :name (str "php/" def))))
           matching-php-defs))))
+
+
+
 
 # (apropos "array")
 
@@ -221,7 +227,7 @@
 (defn- find-variables [name]
   [])
 
-(defn- find-definitions [name type]
+(defn- find-definitions [name type] ## TODO
   (concat
    (if (or (not type)
            (= type "function"))
@@ -283,7 +289,7 @@
             (let [name (get (get operation :params) 0)
                   module (get (get operation :params) 1)
                   type (get (get operation :params) 2)]
-              (jsonrpc-result operation (find-definitions name type)))
+              (jsonrpc-result operation (find-definitions name type))) #
 
             true
             (print "Error: invalid operation"))
