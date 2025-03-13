@@ -324,3 +324,70 @@
 
 
   )
+
+
+## Bencode conversion utilities
+
+(defn valid-key?
+  "Checks if `v` is a valid Bencode key or can be converted to a Bencode key."
+  [v]
+  (or (int? v) (float? v) (symbol? v) (keyword? v) (string? v)))
+
+(declare phel->php [x])
+
+(defn- phel-iterable->php [x]
+  (let [arr (php/array)]
+    (foreach [k v x]
+      (when-not (valid-key? k)
+        (throw (php/new \InvalidArgumentException "Key can only be an integer, float, symbol, keyword or a string.")))
+      (php/aset arr (phel->php k) (phel->php v)))
+    arr))
+
+(defn phel->php
+  "Convert a Phel data type to a 'bencode compatible' value."
+  [x]
+  (cond
+    (php/is_iterable x) (phel-iterable->php x)
+    (symbol? x) (name x)
+    (keyword? x) (name x)  # TODO should use str to keep keyword recognizable from strings (?)
+    (float? x) (str x)     #      see Clojure for reference
+    true x))
+
+(defn php->phel
+  "Convert a php data structure to a 'phel compatible' value."
+  [x]
+  (cond
+    (indexed? x) (for [v :in x] (php->phel v))
+    (php-array? x) (let [hashmap (transient {})]
+                     (foreach [k v x]
+                       (put hashmap (keyword k) (php->phel v)))
+                     (persistent hashmap))
+    true x))
+
+(defn bencode-encode
+  "Returns the bencode representation of a value."
+  [value]
+  (when (php/is_resource value)
+    (throw (php/new \InvalidArgumentException "Value can be any type except a resource.")))
+  (php/:: \Rhilip\Bencode\Bencode (encode (phel->php value))))
+
+(defn bencode-decode
+  "Decodes a bencode string."
+  [s]
+  (when-not (string? s) (throw (php/new \InvalidArgumentException "Bencode must be a string.")))
+  ## Calling decode keeping returned format as array, otherwise ArrayObjects are returned
+  ## https://github.com/arokettu/bencode/blob/7bd5447c34846476822c01cb62c0765f94a89e8c/docs/decoding.rst#lists-and-dictionaries
+  (let [php-data (php/:: \Rhilip\Bencode\Bencode
+                         (decode s))] # dictType
+    (php->phel php-data)))
+
+
+
+## \Rhilip\Bencode\Bencode
+# // Decodes a BEncoded string
+# Bencode::decode($string);
+
+## // Encodes string/array/int to a BEncoded string
+## Bencode::encode($data);
+
+## catch \Rhilip\Bencode\ParseException

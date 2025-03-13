@@ -54,8 +54,8 @@ Licensed under the [MIT license](https://opensource.org/licenses/MIT).
 # TODO Editor connection
 (setq nrepl-log-messages t)
 
-## Connection fail
-Need adjust decoder to be less strict?
+## Bencode library is too strict
+https://github.com/clojure-emacs/cider/issues/3786
 
 ### Cider
 [2025-03-13T18:07:00.666929+00:00] server.debug: RECEIVED: d2:op5:clone2:id1:210:time-stamp29:2025-03-13 19:56:04.740577794e [] []

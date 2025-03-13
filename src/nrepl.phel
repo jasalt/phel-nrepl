@@ -1,16 +1,18 @@
 (ns phel-nrepl\nrepl
   (:require phel\str :as str)
-  (:require jasalt\bencode :as bencode)
+  ##(:require jasalt\bencode :as bencode)
   (:require phel-nrepl\util :refer [callable->closure
                                     complete apropos
+                                    bencode-decode
+                                    bencode-encode
                                     ])
   )
 
 ## Nrepl server for Phel (WIP)
 
 (comment
-  (bencode/encode [123 345 "asfd" {:foo (set :asdf 123 "FOO")}])
-  (bencode/decode "li123ei345e4:asfdd3:fool4:asdfi123e3:FOOeee")
+  (bencode-encode [123 345 "asfd" {:foo (set :asdf 123 "FOO")}])
+  (bencode-decode "li123ei345e4:asfdd3:fool4:asdfi123e3:FOOeee")
   )
 
 
@@ -77,7 +79,7 @@
     (send-fn request resp)
     )
   )
-## (bencode/encode {:op "complete" :prefix "prin"})
+## (bencode-encode {:op "complete" :prefix "prin"})
 ## d2:op8:complete6:prefix4:prine
 
 
@@ -97,7 +99,7 @@
     )
   )
 
-## (bencode/encode {:op "macroexpand" :code "(def foo 1)"})
+## (bencode-encode {:op "macroexpand" :code "(def foo 1)"})
 ## d4:code11:(def foo 1)2:op11:macroexpande
 
 ## (defn handle-load-file []
@@ -130,7 +132,7 @@
   (fn [_request response]
     (log-debug (str "request: " _request " response keys: " (keys response)))
     (try
-      (php/-> socket (write (str (bencode/encode response) "\n")))  # \n added (for clarity)
+      (php/-> socket (write (str (bencode-encode response) "\n")))  # \n added (for clarity)
       (catch \Exception e
         (log-error (str "make-send-fn ERROR: " e))))
     )
@@ -172,7 +174,7 @@
                      (when-not (= line "")
                        (try
                          (log-debug (str "RECEIVED: " line))
-                         (handle-request (bencode/decode line) send-fn)  # line = request
+                         (handle-request (bencode-decode line) send-fn)  # line = request
                          (catch
                              \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
                        )
