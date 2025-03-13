@@ -58,7 +58,7 @@
 
 ## resp id, resp done
 (defn handle-eval [request send-fn]
-  (let [eval-res (phel-eval (get request :code))
+  (let [eval-res (eval (read-string (get request :code)))
         resp {:value eval-res :status ["done"]}]
     (send-fn request resp)
     )
