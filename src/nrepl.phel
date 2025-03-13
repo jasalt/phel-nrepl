@@ -2,7 +2,8 @@
   (:require phel\str :as str)
   (:require jasalt\bencode :as bencode)
   (:require phel-nrepl\util :refer [callable->closure
-                                    phel-eval])
+                                    complete
+                                    ])
   )
 
 ## Nrepl server for Phel (WIP)
@@ -66,6 +67,15 @@
 
 ## d4:code7:(+ 1 1)2:op4:evale
 
+## https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#complete
+(defn handle-complete [request send-fn]
+  (let [completions (complete (get request :prefix))
+        resp {:completions completions :status ["done"]}]
+    (send-fn request resp)
+    )
+  )
+## (bencode/encode {:op "complete" :prefix "prin"})
+## d2:op8:complete6:prefix4:prine
 
 ## (defn handle-interrupt [decoded]
 ##   (bencode/encode {:bar 456}))
@@ -76,12 +86,12 @@
   handlers for those operations."
   {:eval      handle-eval      # WIP
    :clone     handle-clone     # TODO
+   :complete  handle-complete
    :describe  handle-describe  # DONE
    ## :info      handle-lookup     # cider-nrepl middleware
    ## :eldoc     handle-lookup     # cider-nrepl middleware
    ## :close     handle-close
    ## :load-file handle-load-file
-   ## :complete  handle-complete
    ## :macroexpand handle-macroexpand
    ## :classpath handle-classpath
    })

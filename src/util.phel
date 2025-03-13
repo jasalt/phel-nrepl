@@ -24,14 +24,295 @@
   []
   (php/aget (php/get_defined_functions) "user"))
 
-(defn phel-compile [s]
+(defn phel-compile [s]  # TODO (compile (read-string expr))
   (let [cf (php/new \Phel\Compiler\CompilerFacade)
         opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
         res (php/-> cf (compile s opts))]
     (php/-> res (getPhpCode))))
 
 
-(defn phel-eval [s]
-  (let [opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
-        rf (php/new \Phel\Run\RunFacade)]
-  (php/-> rf (eval s opts))))
+## (defn phel-eval [s]  # TODO remove as (eval (read-string x)) is better
+##   (let [opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
+##         rf (php/new \Phel\Run\RunFacade)]
+##   (php/-> rf (eval s opts))))
+
+
+## ILT utils
+## Source: https://codeberg.org/mmontone/interactive-lang-tools/
+
+(defn partialr [f & args1]
+  "partial right"
+  (fn [& args2]
+    (apply f (concat args2 args1))))
+
+# ((partialr str "lala") "foo")
+
+(defn- clean-doc [str]
+  (php/trim (php/str_replace (php/array "```phel\n" "```") "" str)))
+
+(defn read-php-obj-prop [obj prop]
+  (let [r (php/new \ReflectionObject obj)
+        p (php/-> r (getProperty prop))]
+    (php/-> p (setAccessible true))
+    (php/-> p (getValue obj))))
+
+# Hack to access Phel registry private definitions data
+(defn registry-definitions []
+  (read-php-obj-prop (php/:: \Phel\Lang\Registry (getInstance))
+                     "definitions"))
+
+(defn namespaces-list []
+  (php/array_keys (registry-definitions)))
+
+# (namespaces-list)
+
+(defn namespace-definitions [namespace]
+  (-> (registry-definitions)
+     (php/aget namespace)
+     (php/array_keys)))
+
+# (count (namespace-definitions "phel\core"))
+# (count (->> (registry-definitions) (php/array_values) (mapcat php/array_keys)))
+
+(defn- ilt-kind-of [type]
+  type)
+
+## JSONRPC protocol
+
+(defn- php-func-args [fname]
+  (->>
+   (php/-> (php/new \ReflectionFunction fname) (getParameters))
+   (map (fn [param] {:name (php/-> param (getName))
+                    :type (php/-> param (getType))}))))
+
+# (php-func-args "array_merge")
+
+(defn get-def-meta-data [namespace name]
+  (let [registry (php/:: \Phel\Lang\Registry (getInstance))]
+    (php/-> registry (getDefinitionMetaData "phel\core" name))))
+
+(defn make-definition [name type kind]
+  (let [def {:id name
+             :name name
+             :module "TODO"
+             :type type
+             :kind kind}]
+    (case kind
+      "function"
+      (cond
+        # php func
+        (php/function_exists name)
+        (-> def
+           (put :args (php-func-args name)))
+
+        # phel fun
+        (get-def-meta-data "phel\core" name)
+        (let [doc (-> (get-def-meta-data "phel\core" name)
+                     (get :doc)
+                     (clean-doc))
+              args-and-doc (apply vector (php/explode "\n" doc))]
+          (-> def
+              (put :args (get args-and-doc 0))
+              (put :doc (php/implode "\n" (to-php-array (rest args-and-doc ))))))
+        # default
+        def)
+      def)))
+
+# (make-definition "array_merge" "function" "function")
+# (make-definition "str" "function" "function")
+
+# Functions used for generating tables for completions
+
+(defn all-phel-def-names []
+  (->> (registry-definitions)
+       (php/array_values)
+       (mapcat php/array_keys)))
+
+# (all-phel-def-names)
+
+(defn all-php-def-names []
+  (let [functions (php/get_defined_functions)
+        internal-functions (get functions "internal")
+        user-functions (get functions "external")]
+    (map str (concat internal-functions user-functions))))
+
+# (all-php-def-names)
+
+(defn complete "return list of completions for string" [what]
+  (cond
+    # If the thing to complete starts with php/, then return php completions.
+   (php/str_starts_with what "php/")
+   (let [what-to-complete (php/substr what 4)]
+     (let [functions (php/get_defined_functions)
+           internal-functions (get functions "internal")
+           user-functions (get functions "external")]
+       (map (partial str "php/")
+            (filter (partialr php/str_starts_with what-to-complete)
+                    (concat internal-functions user-functions)))))
+
+   # Complete with Phel
+   (->> (all-phel-def-names)
+        (filter (partialr php/str_starts_with what)))))
+
+# (complete "php/te")
+# (complete "php/preg")
+# (complete "php/str")
+# (complete "pr")
+
+# (compile '(defn foo [x] x))
+
+(defn- apropos [what]
+  (let [phel-defs (all-phel-def-names)
+        matching-phel-defs (filter (partialr php/str_contains what) phel-defs)
+        php-defs (php/get_defined_functions)
+        php-defs (concat (php/aget php-defs "user")
+                         (php/aget php-defs "internal"))
+        matching-php-defs (filter (partialr php/str_contains what)
+                                  php-defs)]
+    (concat
+     (map (partialr make-definition "function" "function")
+          matching-phel-defs)
+     (map (fn [def] (-> (make-definition def "function" "function")
+                      (put :name (str "php/" def))))
+          matching-php-defs))))
+
+# (apropos "array")
+
+(defn- definition-properties [id properties]
+  (cond
+    # php defs
+   (php/str_starts_with id "php/")
+   (let [php-name (php/substr id 4)]
+     (if (php/function_exists php-name)
+       (make-definition php-name "function" "function")
+       {}))
+
+   # phel defs
+   (some? (partial = id) (all-phel-def-names))
+   (make-definition id "function" "function")
+
+   #default
+   {}))
+
+# (definition-properties "str" [])
+
+(defn- find-functions [name]
+  (cond
+    # php defs
+   (php/str_starts_with name "php/")
+   (let [php-name (php/substr name 4)]
+     (if (php/function_exists php-name)
+       [(make-definition php-name "function" "function")]
+       []))
+
+   # phel defs
+   (some? (partial = name) (all-phel-def-names))
+   [(make-definition name "function" "function")]
+
+   # otherwise
+   []))
+
+# (find-functions "php/array_merge")
+# (find-functions "str")
+# (find-functions "lala")
+
+(defn- find-variables [name]
+  [])
+
+(defn- find-definitions [name type]
+  (concat
+   (if (or (not type)
+           (= type "function"))
+     (find-functions name)
+     [])
+   (if (or (not type)
+           (= type "variable"))
+     (find-variables name)
+     [])))
+
+# (find-definitions "php/array_merge" "function")
+# (find-definitions "php/array_merges" "function")
+# (find-definitions "lala" "function")
+# (find-definitions "php/array_merge" nil)
+# (find-definitions "str" nil)
+(comment
+
+  (defn handle-request []
+    (let [request (http/request-from-globals)
+          uri (get request :uri)]
+      (when (and (= (get request :method) "POST")
+                 (= (get uri :path) "/ilt"))
+        (let [operation (json-decode-value (php/json_decode (php/file_get_contents "php://input") true))]
+          (case (get operation :method)
+            "evaluate"
+            (let [expr (first (get operation :params))]
+              (try
+                (let [res (eval (read-string expr))]
+                  (jsonrpc-result operation
+                                  {:type (type res)
+                                   :repr (print-str res)
+                                   :kind (ilt-kind-of (type res))}  # useless?
+                                  ))
+                (catch \Exception e
+                  (jsonrpc-error operation (php/-> e (getMessage))))))
+
+            "compile"  # TODO should be "macroexpand?"
+            (let [expr (first (get operation :params))]
+              (try
+                (let [res (compile (read-string expr))]
+                  (jsonrpc-result operation res))
+                (catch \Exception e
+                  (jsonrpc-error operation (php/-> e (getMessage))))))
+
+            "complete"
+            (let [what (first (get operation :params))]
+              (jsonrpc-result operation (complete what)))
+
+            "get_definition_properties"
+            (let [def (first (get operation :params))
+                  props (second (get operation :params))]
+              (jsonrpc-result operation (definition-properties def props)))
+
+            "apropos"
+            (let [what (first (get operation :params))]
+              (jsonrpc-result operation (apropos what)))
+
+            "find_definitions"
+            (let [name (get (get operation :params) 0)
+                  module (get (get operation :params) 1)
+                  type (get (get operation :params) 2)]
+              (jsonrpc-result operation (find-definitions name type)))
+
+            true
+            (print "Error: invalid operation"))
+
+          ## We handled the ILT jsonrpc request. Quit now.
+          (php/exit 0)
+          ))))
+  ## (get [] 3)
+  ## (+ 2 2)
+
+  ## (php/str_starts_with "this is a test" "this")
+  ## (php/str_starts_with "this is a test" "that")
+
+  ## (lalal)
+
+  ## (http/request-from-globals)
+
+  ## (php/json_encode 22)
+
+  ## (php/function_exists "count")
+  ## (php/-> (php/new \ReflectionFunction "count") (getParameters))
+  ## (php/-> (php/new \ReflectionFunction "count") (getDocComment))
+
+  ## (php/-> (php/new \ReflectionFunction "array_merge") (getParameters))
+  ## (php/-> (php/new \ReflectionFunction "array_merge") (getDocComment))
+  ## (php/-> (php/new \ReflectionFunction "array_merge") (getName))
+  ## (php/-> (php/new \ReflectionFunction "array_merge") (getNamespaceName))
+  ## (php/-> (php/new \ReflectionFunction "array_merge") (getReturnType))
+  ## (php/-> (php/new \ReflectionFunction "array_merge") (getFilename))
+
+  ## (php/get_class_methods "Symfony\Component\String\AbstractString")
+
+
+  )
