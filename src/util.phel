@@ -161,6 +161,8 @@
 
 # (compile '(defn foo [x] x))
 
+# TODO nREPL expected formatting
+## https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#apropos
 (defn- apropos [what]
   (let [phel-defs (all-phel-def-names)
         matching-phel-defs (filter (partialr php/str_contains what) phel-defs)

@@ -2,7 +2,7 @@
   (:require phel\str :as str)
   (:require jasalt\bencode :as bencode)
   (:require phel-nrepl\util :refer [callable->closure
-                                    complete
+                                    complete apropos
                                     ])
   )
 
@@ -77,8 +77,13 @@
 ## (bencode/encode {:op "complete" :prefix "prin"})
 ## d2:op8:complete6:prefix4:prine
 
-## (defn handle-interrupt [decoded]
-##   (bencode/encode {:bar 456}))
+
+(defn handle-apropos [request send-fn]  # WIP
+  (let [matching-defs (apropos (get request :prefix))
+        resp {:completions completions :status ["done"]}]
+    (send-fn request resp)
+    )
+  )
 
 
 (def ops
@@ -88,6 +93,8 @@
    :clone     handle-clone     # TODO
    :complete  handle-complete
    :describe  handle-describe  # DONE
+   ## :apropos   handle-apropos # WIP
+
    ## :info      handle-lookup     # cider-nrepl middleware
    ## :eldoc     handle-lookup     # cider-nrepl middleware
    ## :close     handle-close
