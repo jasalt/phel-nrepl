@@ -128,14 +128,14 @@
    })
 
 
+## TODO response-for-mw middleware ?
+## https://github.com/basilisp-lang/basilisp/blob/main/src/basilisp/contrib/nrepl_server.lpy#L51
 (defn- make-send-fn [socket]
   (fn [_request response]
     (log-debug (str "request: " _request " response: " response))
     (try
-      (php/-> socket (write
-                      ##(str (bencode-encode response) "\n")  # \n added (for clarity during testing)
-                      (bencode-encode response)
-                      ))
+      (let [response (put response :id (get _request :id))]
+        (php/-> socket (write (bencode-encode response))))
       (catch \Exception e
         (log-error (str "make-send-fn ERROR: " e))))
     )
@@ -149,10 +149,7 @@
       (op-fn request send-fn)
       (do
         (log-warning (str "Unhandled operation" op))
-        (send-fn request {"status" ["error" "unknown-op" "done"]}))
-      )
-    )
-  )
+        (send-fn request {"status" ["error" "unknown-op" "done"]})))))
 
 (loop []
   (let [socket (php/-> server (accept))]
