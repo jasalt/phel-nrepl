@@ -64,7 +64,9 @@
 
 ## resp id, resp done
 (defn handle-eval [request send-fn]
-  (let [eval-res (eval (read-string (get request :code)))
+  (let [code-input (get request :code)
+        _ (log-debug code-input)
+        eval-res (eval (read-string (get request :code)))
         resp {:value eval-res :status ["done"]}]
     (send-fn request resp)
     )
@@ -135,6 +137,7 @@
     (log-debug (str "request: " _request " response: " response))
     (try
       (let [response (put response :id (get _request :id))]
+        (log-debug (str "request: " _request " response: " response))
         (php/-> socket (write (bencode-encode response))))
       (catch \Exception e
         (log-error (str "make-send-fn ERROR: " e))))
