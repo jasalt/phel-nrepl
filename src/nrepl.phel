@@ -67,7 +67,8 @@
   (let [code-input (get request :code)
         _ (log-debug code-input)
         eval-res (eval (read-string (get request :code)))
-        resp {:value eval-res :status ["done"]}]
+        eval-res-str (str eval-res)
+        resp {:value eval-res-str :status ["done"]}]
     (send-fn request resp)
     )
   )
