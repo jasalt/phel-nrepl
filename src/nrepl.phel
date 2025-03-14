@@ -56,7 +56,7 @@
         php-version 2]
     (send-fn request {"versions"
                       {"phel" (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
-                                  "php" (php/phpversion)                                                                                 }
+                       "php" (php/phpversion)}
                       "ops" (map name (keys ops))
                       "status" ["done"]})))
 
