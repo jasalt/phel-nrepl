@@ -51,10 +51,38 @@ Useful Phel functions in ILT project: https://codeberg.org/mmontone/interactive-
 
 Licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-# TODO Editor connection
-(setq nrepl-log-messages t)
+# Editor connection workarounds
+For client debugging use:
+- Cider: (setq nrepl-log-messages t)
+- Calva: toggle nREPL logging enabled
 
-## Bencode library is too strict
+## TODO clojure repl require on cider connect fails
+There's a failure on Cider startup when it attempts to resolve and load `clojure.main/repl-requires`.
+
+```
+(when-let [requires (resolve 'clojure.main/repl-requires)]
+  (clojure.core/apply clojure.core/require @requires))
+```
+
+No such namespace exists, neither `when-let` or `resolve`.
+
+
+Can be overriden with `(setq cider-repl-init-code "")`, could be require https://github.com/phel-lang/phel-lang/blob/main/src/php/Run/Domain/Repl/startup.phel:
+```
+(:require phel\repl :refer [doc require use print-colorful println-colorful])
+```
+-- https://docs.cider.mx/cider/repl/basic_usage.html#loading-repl-utility-functions
+
+
+### exception:
+
+crash:
+[2025-03-14T07:06:27.234180+00:00] server.debug: RECEIVED: d2:op4:eval4:code113:(when-let [requires (resolve 'clojure.main/repl-requires)]   (clojure.core/apply clojure.core/require @requires))4:file54:*cider-repl phel-snake-online/src:localhost:8888(clj)*4:linei9e6:columni1e30:nrepl.middleware.print/stream?1:128:nrepl.middleware.print/print25:cider.nrepl.pprint/pprint28:nrepl.middleware.print/quotai1048576e34:nrepl.middleware.print/buffer-sizei4096e30:nrepl.middleware.print/optionsd12:right-margini70ee24:inhibit-cider-middleware4:true7:sessioni99e2:id1:7e [] []
+[2025-03-14T07:06:27.235188+00:00] server.debug: (when-let [requires (resolve 'clojure.main/repl-requires)]   (clojure.core/apply clojure.core/require @requires)) [] []
+[2025-03-14T07:06:27.235620+00:00] server.error: UNKNOWN HANDLING ERROR: Phel\Compiler\Domain\Lexer\Exceptions\LexerValueException: Cannot lex string after at column 43 in string:2 in /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Lexer/Exceptions/LexerValueException.php:15 Stack trace: #0 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Lexer.php(92): Phel\Compiler\Domain\Lexer\Exceptions\LexerValueException::unexpectedLexerState() #1 [internal function]: Phel\Compiler\Application\Lexer->lexStringGenerator() #2 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Lexer/TokenStream.php(33): Generator->next() #3 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Parser.php(91): Phel\Compiler\Domain\Lexer\TokenStream->next() #4 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Parser/ExpressionParser/ListParser.php(37): Phel\Compiler\Application\Parser->readExpression() #5 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Parser.php(180): Phel\Compiler\Domain\Parser\ExpressionParser\ListParser->parse() #6 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Parser.php(101): Phel\Compiler\Application\Parser->parseFnListNode() #7 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Parser/ExpressionParser/ListParser.php(37): Phel\Compiler\Application\Parser->readExpression() #8 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Parser.php(180): Phel\Compiler\Domain\Parser\ExpressionParser\ListParser->parse() #9 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Parser.php(101): Phel\Compiler\Application\Parser->parseFnListNode()
+## DONE Bencode library is too strict
+Workaround was to use less strict decoder from another library for now.
+
 https://github.com/clojure-emacs/cider/issues/3786
 
 ### Cider
