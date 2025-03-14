@@ -57,7 +57,7 @@
     (send-fn request {"versions"
                       {"phel" (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
                        "php" (php/phpversion)}
-                      "ops" (map name (keys ops))
+                      "ops" (reduce (fn [acc x] (put acc x {:foo "bar"})) {} (keys ops)) # encoder seems to put {} as nil
                       "status" ["done"]})))
 
 ## d2:op8:describee
@@ -77,7 +77,8 @@
 
 ## https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#complete
 (defn handle-complete [request send-fn]
-  (let [completions (complete (get request :prefix))
+  (let [completions-vector (complete (get request :prefix))
+        completions (map (fn [x] {:candidate x :type (type x)}) completions-vector)
         resp {:completions completions :status ["done"]}]
     (send-fn request resp)
     )
@@ -135,7 +136,7 @@
 ## https://github.com/basilisp-lang/basilisp/blob/main/src/basilisp/contrib/nrepl_server.lpy#L51
 (defn- make-send-fn [socket]
   (fn [_request response]
-    (log-debug (str "request: " _request " response: " response))
+    ## (log-debug (str "request: " _request " response: " response))
     (try
       (let [response (put response :id (get _request :id))]
         (log-debug (str "request: " _request " response: " response))
