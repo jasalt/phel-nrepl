@@ -130,7 +130,7 @@
 
 (defn- make-send-fn [socket]
   (fn [_request response]
-    (log-debug (str "request: " _request " response keys: " (keys response)))
+    (log-debug (str "request: " _request " response: " response))
     (try
       (php/-> socket (write
                       ##(str (bencode-encode response) "\n")  # \n added (for clarity during testing)
