@@ -23,6 +23,16 @@ d4:code7:(+ 1 1)2:op4:evale
 d6:statusl4:donee5:valuei2ee
 ```
 
+Connection with Emacs Cider works with some hiccups.
+
+## Supported nREPL OPS
+- describe
+- clone (does not give unique id's)
+- eval (simplistic)
+- completions (completion info wip)
+
+Read sources for more hints.
+
 ## Resources
 Some helpful resources:
 
