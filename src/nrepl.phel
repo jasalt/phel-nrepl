@@ -138,9 +138,12 @@
   (fn [_request response]
     ## (log-debug (str "request: " _request " response: " response))
     (try
-      (let [response (put response :id (get _request :id))]
-        (log-debug (str "request: " _request " response: " response))
-        (php/-> socket (write (bencode-encode response))))
+      (let [response (put response :id (get _request :id))
+            response-bencode (bencode-encode response)]
+        (log-debug (str "request: " _request))
+        (log-debug (str "response: " response))
+        (log-debug (str "SENDING: " response-bencode))
+        (php/-> socket (write response-bencode)))
       (catch \Exception e
         (log-error (str "make-send-fn ERROR: " e))))
     )
