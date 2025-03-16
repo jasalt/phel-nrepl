@@ -1,0 +1,31 @@
+## Demo namespace for Cider nREPL experiments
+
+## Cider:
+## (setq nrepl-log-messages t)
+## (setq cider-repl-init-code "")
+## (setq cider-info-form "")
+
+(def foo 1)
+(+ foo 1)
+
+(with-output-buffer (php/print_r (php/getenv)))
+
+## (ns user
+##   (:require phel\repl :refer [doc require use print-colorful println-colorful]))
+
+
+## ok
+(require phel-nrepl\util :as util)
+(with-output-buffer (php/print_r (util/show-user-defined)))
+(util/phel-doc with-output-buffer)
+
+(require phel\repl :as repl)
+(with-output-buffer (repl/doc with-output-buffer))
+
+
+## fail
+(require phel\html :as html)
+(require phel\html :refer [html raw-string])
+
+(html [:div "foo"])
+(raw-string "<a></a>")  # can't resolve .. earlier requires also start failing
