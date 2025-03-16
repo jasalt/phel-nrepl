@@ -51,6 +51,27 @@ Useful Phel functions in ILT project: https://codeberg.org/mmontone/interactive-
 
 Licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
+# TODO
+## function info
+(defconst cider-info-form "
+(do
+  (require 'clojure.java.io)
+  (require 'clojure.walk)
+
+  (if-let [var (resolve '%s)]
+    (let [info (meta var)]
+      (-> info
+          (update :ns str)
+          (update :name str)
+          (update :file (comp str clojure.java.io/resource))
+          (cond-> (:macro info) (update :macro str))
+          (cond-> (:special-form info) (update :special-form str))
+          (cond-> (:protocol info) (update :protocol str))
+          (cond-> (:arglists info) (update :arglists str))
+          (assoc :arglists-str (str (:arglists info)))
+          (clojure.walk/stringify-keys)))))
+")
+
 # Editor connection workarounds
 For client debugging use:
 - Cider: (setq nrepl-log-messages t)
@@ -99,3 +120,11 @@ https://github.com/clojure-emacs/cider/issues/3786
 ### Calva
 [2025-03-13T17:47:02.419766+00:00] server.debug: GOT: d2:op4:eval4:code4:*ns*2:id1:1e [] []
 [2025-03-13T17:47:02.430963+00:00] server.error: loop error: Arokettu\Bencode\Exceptions\ParseErrorException: Invalid order of dictionary keys: 'code' after 'op' in /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Engine/Reader.php:185 Stack trace: #0 [internal function]: Arokettu\Bencode\Engine\Reader->Arokettu\Bencode\Engine\{closure}() #1 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Bencode/Collection.php(18): iterator_to_array() #2 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Engine/Reader.php(194): Arokettu\Bencode\Bencode\Collection->Arokettu\Bencode\Bencode\{closure}() #3 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Engine/Reader.php(157): Arokettu\Bencode\Engine\Reader->finalizeDict() #4 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Engine/Reader.php(83): Arokettu\Bencode\Engine\Reader->finalizeContainer() #5 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Engine/Reader.php(55): Arokettu\Bencode\Engine\Reader->processChar() #6 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Decoder.php(62): Arokettu\Bencode\Engine\Reader->read() #7 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Decoder.php(74): Arokettu\Bencode\Decoder->decodeStream() #8 /home/user/dev/phel-nrepl/vendor/arokettu/bencode/src/Bencode.php(27): Arokettu\Bencode\Decoder->decode() #9...
+
+# Known issues
+## Issues requiring namespaces
+Related: https://github.com/phel-lang/phel-lang/issues/766
+
+## cider-enlighten-mode eval not working
+[2025-03-16T17:27:16.054509+00:00] server.debug: RECEIVED: d2:ns4:user2:op4:eval4:code7:(+ 1 1)9:enlighten4:true4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei7e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei7e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei7e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei7e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei7e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei1e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei3e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei3e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei7e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei5e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei5e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei5e6:columni1e4:file46:/home/user/dev/phel-snake-online/src/demo.phel4:linei5e6:columni1e28:nrepl.middleware.print/print21:cider.nrepl.pprint/pr30:nrepl.middleware.print/stream?le28:nrepl.middleware.print/quotai1048576e7:sessioni99e2:id2:79e [] []
+[2025-03-16T17:27:16.054731+00:00] server.error: UNKNOWN HANDLING ERROR: Rhilip\Bencode\ParseErrorException: Duplicate Dictionary key exist before: file in /home/user/dev/phel-nrepl/vendor/rhilip/bencode/src/Bencode.php:75 Stack trace: #0 /tmp/__phelb54hJY(17): Rhilip\Bencode\Bencode::decode() #1 /tmp/__pheli7XaNg(53): Phel\Lang\AbstractFn@anonymous->__invoke() #2 /home/user/dev/phel-nrepl/vendor/amphp/amp/src/functions.php(33): Phel\Lang\AbstractFn@anonymous->__invoke() #3 /home/user/dev/phel-nrepl/vendor/revolt/event-loop/src/EventLoop/Internal/AbstractDriver.php(430): Amp\{closure}()
