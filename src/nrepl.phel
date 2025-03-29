@@ -108,7 +108,7 @@
               :line 1
               "column" 1
               :ns "TODO"
-              :status "done"
+              :status ["done"]
               :doc-fragments [{:type "text" :content sym-doc}]
               :name sym}
         resp info]  # {:info info}
