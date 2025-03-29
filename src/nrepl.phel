@@ -38,7 +38,7 @@
 ## TODO transport to handler
 
 (defn handle-clone [request send-fn]
-  (let [resp {:new-session 99 :status ["done"]}]
+  (let [resp {:new-session (str (rand-int 1000000)) :session "none" :status ["done"]}]
     (send-fn request resp)
     )
   )
@@ -46,13 +46,13 @@
 (declare ops)
 
 (defn handle-describe [request send-fn]
-  (let [phel-version 1
-        php-version 2]
-    (send-fn request {"versions"
-                      {"phel" (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
-                       "php" (php/phpversion)}
-                      "ops" (reduce (fn [acc x] (put acc x {:foo "bar"})) {} (keys ops)) # encoder seems to put {} as nil
-                      "status" ["done"]})))
+  (send-fn request
+           {:status ["done"]
+            "versions"
+            {"phel" (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
+             "php" (php/phpversion)}
+            "ops" (reduce (fn [acc x] (put acc x {:doc "Doc..."})) {} (keys ops)) # HACK: encoder seems to put {} as nil
+            }))
 
 ## d2:op8:describee
 
@@ -152,9 +152,11 @@
 ## https://github.com/basilisp-lang/basilisp/blob/main/src/basilisp/contrib/nrepl_server.lpy#L51
 (defn- make-send-fn [socket]
   (fn [_request response]
-    ## (log-debug (str "request: " _request " response: " response))
     (try
       (let [response (put response :id (get _request :id))
+            response (if (get response :session)
+                       response
+                       (put response :session (get _request :session)))
             response-bencode (bencode-encode response)]
         (log-debug (str "request: " _request))
         (log-debug (str "response: " response))
