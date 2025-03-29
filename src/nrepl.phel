@@ -1,24 +1,13 @@
 (ns phel-nrepl\nrepl
   (:require phel\str :as str)
-  ##(:require jasalt\bencode :as bencode)
   (:require phel-nrepl\util :refer [callable->closure
                                     complete apropos
                                     bencode-decode
                                     bencode-encode
                                     phel-doc
                                     ])
-  #(:require phel-nrepl\repl :as repl)
-  ## (:require phel\repl :as repl)
   (:require phel\repl :refer [doc require use print-colorful println-colorful])
   )
-
-## Nrepl server for Phel (WIP)
-
-(comment
-  (bencode-encode [123 345 "asfd" {:foo (set :asdf 123 "FOO")}])
-  (bencode-decode "li123ei345e4:asfdd3:fool4:asdfi123e3:FOOeee")
-  )
-
 
 (def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
 (php/-> log-handler (setFormatter (php/new \Amp\Log\ConsoleFormatter)))
@@ -36,8 +25,9 @@
 (defn log-error [s]
   (php/-> logger (error (str s))))
 
+(def port 8888)
 
-(def server (php/amp\socket\listen "127.0.0.1:8888"))
+(def server (php/amp\socket\listen (str "127.0.0.1:" port)))
 (def address (php/-> server (getAddress)))
 
 (log-info (str "Listening for new connections on " (php/-> server (getAddress))))
@@ -192,11 +182,12 @@
        (callable->closure
         (fn []
           (let [client-address (php/-> socket (getRemoteAddress))
-                client-ip      (php/-> client-address (getAddress)) # ->getHost(); # not found, docs have issue?
+                ## NOTE: ->getHost(); -> method not found, amphp docs have issue? https://amphp.org/socket#handling-connections
+                client-ip      (php/-> client-address (getAddress))
                 client-port    (php/-> client-address (getPort))
                 server-address (php/-> address (getAddress))
-                nrepl-server-signature (str "nREPL server started on port 8888 on host "
-                                            server-address " - nrepl://" server-address ":8888" "\n")
+                nrepl-server-signature (str "nREPL server started on port " port " on host "
+                                            server-address " - nrepl://" server-address ":" port "\n")
                 send-fn (make-send-fn socket)]
 
             (log-info (str "accepted connection from " address))
@@ -210,24 +201,11 @@
                   (do
                     (try
                       (log-debug (str "RECEIVED: " chunk))
-                      (handle-request (bencode-decode chunk) send-fn)  # line = request
+                      (handle-request (bencode-decode chunk) send-fn)
 
                       (catch
                           \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
                     (recur [])))))
-
-            ## (dofor [line-raw :in (php/amp\bytestream\splitlines socket)]
-            ##        (let [line (php/rtrim line-raw)]  # TODO cider client not sending linebreak
-            ##          (log-info (str "processing " line))
-            ##          (when-not (= line "")
-            ##            (try
-            ##              (log-debug (str "RECEIVED: " line))
-            ##              (handle-request (bencode-decode line) send-fn)  # line = request
-            ##              (catch
-            ##                  \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
-            ##            )
-            ##          )
-            ##        )
 
             (php/-> socket (end))))))
       (recur))))
