@@ -7,6 +7,7 @@ Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging [amph
 ## TODO
 
 - [ ] Fix requiring namespaces / files (Phel issue https://github.com/phel-lang/phel-lang/issues/766)
+- [ ] Investigate `defmacro` issue (`examples/250330-macro-issue.phel` / https://github.com/phel-lang/phel-lang/issues/784)
 
 ## Usage
 

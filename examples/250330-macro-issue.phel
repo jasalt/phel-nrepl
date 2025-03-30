@@ -1,0 +1,18 @@
+## Following works in regular Phel REPL, but running defmacro in nREPL does not work
+## Issue: https://github.com/phel-lang/phel-lang/issues/784
+
+(defmacro when-let
+  [bindings & body]
+  (let [form (bindings 0) tst (bindings 1) temp-sym (gensym)]
+    `(let [temp-sym ,tst]
+       (when temp-sym
+         (let [,form temp-sym]
+           ,@body)))))
+
+(when-let [a nil] 99)
+
+## (nREPL): Phel\Compiler\Domain\Analyzer\Exceptions\AnalyzerException: Cannot resolve symbol 'a' in /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Analyzer/Exceptions/AnalyzerException.php:20 Stack trace: #0 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Analyzer/TypeAnalyzer/AnalyzeSymbol.php(51): Phel\Compiler\Domain\Analyzer\Exceptions\AnalyzerException::withLocation() #1 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Analyzer/TypeAnalyzer/AnalyzeSymbol.php(30): Phel\Compiler\Domain\Analyzer\TypeAnalyzer\AnalyzeSymbol->createGlobalResolve() #2 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Analyzer.php(108): Phel\Compiler\Domain\Analyzer\TypeAnalyzer\AnalyzeSymbol->analyze() #3 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Analyzer/TypeAnalyzer/AnalyzePersistentVector.php(23): Phel\Compiler\Application\Analyzer->analyze() #4 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Analyzer.php(116): Phel\Compiler\Domain\Analyzer\TypeAnalyzer\AnalyzePersistentVector->analyze() #5 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Analyzer/TypeAnalyzer/SpecialForm/InvokeSymbol.php(172): Phel\Compiler\Application\Analyzer->analyze() #6 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Analyzer/TypeAnalyzer/SpecialForm/InvokeSymbol.php(50): Phel\Compiler\Domain\Analyzer\TypeAnalyzer\SpecialForm\InvokeSymbol->arguments() #7 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Analyzer/TypeAnalyzer/AnalyzePersistentList.php(56): Phel\Compiler\Domain\Analyzer\TypeAnalyzer\SpecialForm\InvokeSymbol->analyze() #8 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/Analyzer.php(112): Phel\Compiler\Domain\Analyzer\TypeAnalyzer\AnalyzePersistentList->analyze() #9 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/EvalCompiler.php(82): Phel\Compiler\Application\Analyzer->analyze() #10 /home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/CompilerFacade.php(70): Phel\Compiler\Application\EvalCompiler->evalForm() #11 /tmp/__phelZ4mHnq(14): Phel\Compiler\CompilerFacade->evalForm() #12 /tmp/__phelZ4mHnq(15): Phel\Lang\AbstractFn@anonymous->{closure}() #13 /tmp/__phel2glEML(13): Phel\Lang\AbstractFn@anonymous->__invoke() #14 /tmp/__phelD1rVAU(14): Phel\Lang\AbstractFn@anonymous->__invoke() #15 /tmp/__phelPrMywx(30): Phel\Lang\AbstractFn@anonymous->__invoke() #16 /home/user/dev/phel-nrepl/vendor/amphp/amp/src/functions.php(33): Phel\Lang\AbstractFn@anonymous->__invoke() #17 /home/user/dev/phel-nrepl/vendor/revolt/event-loop/src/EventLoop/Internal/AbstractDriver.php(430): Amp\{closure}() #18 /home/user/dev/phel-nrepl/vendor/revolt/event-loop/src/EventLoop/Internal/AbstractDriver.php(621): Revolt\EventLoop\Internal\AbstractDriver->invokeMicrotasks()
+
+
+## Regular REPL works as expected:
+## (./vendor/bin/phel repl): nil
