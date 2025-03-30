@@ -33,32 +33,26 @@
 (def address (php/-> server (getAddress)))
 
 (log-info (str "nREPL server started on port " port " on host "
-               server-address " - nrepl://" server-address ":" port "\n"
-               ))
+               server-address " - nrepl://" server-address ":" port "\n"))
 (log-info "TODO send startup message direct to stdout")
-
-## TODO transport to handler
-
-(defn handle-clone [request send-fn]
-  (let [resp {:new-session (str (rand-int 1000000)) :status ["done"]}]
-    (send-fn request resp)
-    )
-  )
 
 (declare ops)
 
+(defn handle-clone [request send-fn]
+  (let [resp {:new-session (str (rand-int 1000000)) :status ["done"]}]
+    (send-fn request resp)))
+
 (defn handle-describe [request send-fn]
   (send-fn request
-           {:status ["done"]
-            "versions"
-            {"phel" (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
-             "php" (php/phpversion)}
-            "ops" (reduce (fn [acc x] (put acc x {:doc "Doc..."})) {} (keys ops)) # HACK: encoder seems to put {} as nil
-            }))
+           {:versions
+            {:phel (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
+             :php (php/phpversion)}
+            ## Encoder sets {} as nil, so send :doc key ↓
+            :ops (reduce (fn [acc x] (put acc x {:doc "Doc..."})) {} (keys ops))
+            :status ["done"]}))
 
 ## d2:op8:describee
 
-## resp id, resp done
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
         _ (log-debug code-input)
@@ -76,28 +70,22 @@
   (let [completions-vector (complete (get request :prefix))
         completions (map (fn [x] {:candidate x :type (type x)}) completions-vector)
         resp {:completions completions :status ["done"]}]
-    (send-fn request resp)
-    )
-  )
+    (send-fn request resp)))
+
 ## (bencode-encode {:op "complete" :prefix "prin"})
 ## d2:op8:complete6:prefix4:prine
-
 
 (defn handle-apropos [request send-fn]  # WIP
   (let [matching-defs (apropos (get request :prefix))
         resp {:completions matching-defs :status ["done"]}]
-    (send-fn request resp)
-    )
-  )
+    (send-fn request resp)))
 
 (defn handle-macroexpand
   "fake macroexpand, compiling expr to PHP"
   [request send-fn]
   (let [result (compile (read-string (get request :code)))
         resp {:expansion result :status ["done"]}]
-    (send-fn request resp)
-    )
-  )
+    (send-fn request resp)))
 
 (defn handle-lookup
   "WIP lookup, used for info and lookup ops"
@@ -108,20 +96,18 @@
         info {## :arglists-str
               :file "/dev/null"
               :line 1
-              "column" 1
+              :column 1
               :ns "TODO"
               :status ["done"]
               :doc-fragments [{:type "text" :content sym-doc}]
               :name sym}
         resp info]  # {:info info}
-    (send-fn request resp)
-    )
-  )
+    (send-fn request resp)))
 
 ## (bencode-encode {:op "macroexpand" :code "(def foo 1)"})
 ## d4:code11:(def foo 1)2:op11:macroexpande
 
-## (defn handle-load-file []
+## (defn handle-load-file []  # TODO
 ##   ## https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L285
 ##   []
 ##   )
@@ -131,7 +117,7 @@
   handlers for those operations."
   {:eval        handle-eval      # WIP
    :clone       handle-clone     # TODO
-   :complete    handle-complete
+   :complete    handle-complete  # DONE
    :describe    handle-describe  # DONE
    :macroexpand handle-macroexpand
 
@@ -139,12 +125,8 @@
    :info        handle-lookup     # cider-nrepl middleware
 
    ## :apropos   handle-apropos # WIP
-
-
    ## :eldoc     handle-lookup     # cider-nrepl middleware
-
    ## :close     handle-close
-
    ## :load-file handle-load-file
    ## :classpath handle-classpath
    })
@@ -162,12 +144,10 @@
             response-bencode (bencode-encode response)]
         (log-debug (str "request: " _request))
         (log-debug (str "response: " response))
-        (log-debug (str "SENDING: " response-bencode))
+        ## (log-debug (str "SENDING: " response-bencode))
         (php/-> socket (write response-bencode)))
       (catch \Exception e
-        (log-error (str "make-send-fn ERROR: " e))))
-    )
-  )
+        (log-error (str "make-send-fn ERROR: " e))))))
 
 
 (defn- handle-request [request send-fn]
@@ -196,7 +176,7 @@
                 (when chunk
                   (do
                     (try
-                      (log-debug (str "RECEIVED: " chunk))
+                      ## (log-debug (str "RECEIVED: " chunk))
                       (handle-request (bencode-decode chunk) send-fn)
 
                       (catch
