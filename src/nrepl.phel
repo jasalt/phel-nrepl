@@ -170,14 +170,12 @@
             (loop []
               (let [chunk (php/-> socket (read))
                     chunk (when chunk (php/rtrim chunk))]
-                (when chunk
-                  (do
-                    (try
-                      ## (log-debug (str "RECEIVED: " chunk))
-                      (handle-request (bencode-decode chunk) send-fn)
-
-                      (catch
-                          \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
-                    (recur)))))
+                (when chunk  # TODO: add when-let macro to Phel
+                  (try
+                    ## (log-debug (str "RECEIVED: " chunk))
+                    (handle-request (bencode-decode chunk) send-fn)
+                    (catch
+                        \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
+                  (recur))))
             (php/-> socket (end))))))
       (recur))))
