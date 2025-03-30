@@ -31,6 +31,8 @@ Connection with Emacs Cider and Calva work mostly.
 ### Cider
 Logging: (setq nrepl-log-messages t)
 
+Developed using clojure-mode with small tweaks https://codeberg.org/jasalt/.emacs.d/src/branch/main/personal/phel.el.
+
 ### Calva
 Logging: toggle nREPL logging enabled
 
