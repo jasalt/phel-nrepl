@@ -166,13 +166,10 @@
        (callable->closure
         (fn []
           (let [send-fn (make-send-fn socket)]
-
             (log-info (str "accepted connection from " address))
-
-            (loop [buffer []]  # TODO buffer not used, is it needed?
+            (loop []
               (let [chunk (php/-> socket (read))
                     chunk (when chunk (php/rtrim chunk))]
-
                 (when chunk
                   (do
                     (try
@@ -181,7 +178,6 @@
 
                       (catch
                           \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
-                    (recur [])))))
-
+                    (recur)))))
             (php/-> socket (end))))))
       (recur))))
