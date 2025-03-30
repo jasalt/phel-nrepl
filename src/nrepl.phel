@@ -25,20 +25,22 @@
 (defn log-error [s]
   (php/-> logger (error (str s))))
 
+(def server-address "127.0.0.1")
 (def port 8888)
 
-(def server (php/amp\socket\listen (str "127.0.0.1:" port)))
+(def server (php/amp\socket\listen (str server-address ":" port)))
+
 (def address (php/-> server (getAddress)))
 
-(log-info (str "Listening for new connections on " (php/-> server (getAddress))))
-(log-info "Connect from a terminal, e.g. ")
-(log-info (str "nc " (php/-> address (getAddress)) ":" (php/-> address (getPort))))
-
+(log-info (str "nREPL server started on port " port " on host "
+               server-address " - nrepl://" server-address ":" port "\n"
+               ))
+(log-info "TODO send startup message direct to stdout")
 
 ## TODO transport to handler
 
 (defn handle-clone [request send-fn]
-  (let [resp {:new-session (str (rand-int 1000000)) :session "none" :status ["done"]}]
+  (let [resp {:new-session (str (rand-int 1000000)) :status ["done"]}]
     (send-fn request resp)
     )
   )
@@ -183,17 +185,9 @@
       (php/amp\async
        (callable->closure
         (fn []
-          (let [client-address (php/-> socket (getRemoteAddress))
-                ## NOTE: ->getHost(); -> method not found, amphp docs have issue? https://amphp.org/socket#handling-connections
-                client-ip      (php/-> client-address (getAddress))
-                client-port    (php/-> client-address (getPort))
-                server-address (php/-> address (getAddress))
-                nrepl-server-signature (str "nREPL server started on port " port " on host "
-                                            server-address " - nrepl://" server-address ":" port "\n")
-                send-fn (make-send-fn socket)]
+          (let [send-fn (make-send-fn socket)]
 
             (log-info (str "accepted connection from " address))
-            (php/-> socket (write nrepl-server-signature))
 
             (loop [buffer []]  # TODO buffer not used, is it needed?
               (let [chunk (php/-> socket (read))
