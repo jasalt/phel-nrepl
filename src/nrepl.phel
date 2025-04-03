@@ -67,8 +67,8 @@
 
 ## https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#complete
 (defn handle-complete [request send-fn]
-  (let [completions-vector (complete (get request :prefix))
-        completions (map (fn [x] {:candidate x :type (type x)}) completions-vector)
+  (let [completions (complete (get request :prefix))
+        _ (log-info completions)
         resp {:completions completions :status ["done"]}]
     (send-fn request resp)))
 
@@ -92,12 +92,12 @@
   [request send-fn]
   (let [sym (get request :sym)
         sym-doc (phel-doc sym)
-        _ (log-debug (str "lookup got: " sym-doc))
+        _ (log-debug (str "sym-doc: " sym-doc))
         info {## :arglists-str
-              :file "/dev/null"
+              :file "TODO_file"
               :line 1
               :column 1
-              :ns "TODO"
+              :ns "TODO_ns"
               :status ["done"]
               :doc-fragments [{:type "text" :content sym-doc}]
               :name sym}

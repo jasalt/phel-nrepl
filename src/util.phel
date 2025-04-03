@@ -2,6 +2,7 @@
   #(:require phel-nrepl\repl :as repl)
   ##(:require phel\repl :as repl)
   (:require phel\repl :refer [doc require use print-colorful println-colorful])
+  (:require phel\str :as str) # TODO requiring phel\str fails, won't resolve
   )
 
 (defn dd
@@ -140,8 +141,44 @@
         user-functions (get functions "external")]
     (map str (concat internal-functions user-functions))))
 
-# (all-php-def-names)
 
+## REFACTOR: should probably resolve this info earlier
+(defn resolve-completion-type-phel [s]
+  (cond (function? s) "function"
+        (keyword? s) "keyword"
+        true "?")
+  )
+## Phel
+## ("function" "f")
+## ("keyword" "k")
+## ("var" "v")
+## ("macro" "m")  # how to distinct phel function from macro?
+## ("namespace" "n")
+
+(defn resolve-completion-type-php [s]
+  (cond (function? s) "function"
+        (php-object? s) "class"  # TODO
+        (php-resource? s) "class" # TODO
+        true "?")
+  )
+## PHP
+## ("class" "c")  # complete by startwith \ (?)
+## ("static-method" "sm")
+## ("field" "fi")
+## ("import" "i")
+## ("local" "l")
+## ("method" "me")
+## ("protocol" "p")
+## ("protocol-function" "pf")
+## ("record" "r")
+## ("special-form" "s")
+## ("static-field" "sf")
+## ("type" "t")
+
+## NOTE: cider-completion-annotations-alist defines supported types
+
+## (all-php-def-names)
+## type: function, variable, namespace
 (defn complete "return list of completions for string" [what]
   (cond
     # If the thing to complete starts with php/, then return php completions.
@@ -149,14 +186,63 @@
    (let [what-to-complete (php/substr what 4)]
      (let [functions (php/get_defined_functions)
            internal-functions (get functions "internal")
-           user-functions (get functions "external")]
-       (map (partial str "php/")
-            (filter (partialr php/str_starts_with what-to-complete)
-                    (concat internal-functions user-functions)))))
+           user-functions (get functions "user")
 
-   # Complete with Phel
-   (->> (all-phel-def-names)
-        (filter (partialr php/str_starts_with what)))))
+           completions-v (map (partial str "php/")
+                              (filter (partialr php/str_starts_with what-to-complete)
+                                      (concat internal-functions user-functions)))]
+       (map (fn [x] {:candidate x :type (resolve-completion-type-php x)}) completions-v)
+       )
+     )
+
+   ## (php/str_starts_with what "\\")  ## \ not recognized on cider
+   ## (let [all-classes (php/get_declared_classes)
+   ##       ## The returned list of classes does not include the \ in beginning
+   ##       filtered (filter (partialr php/str_starts_with (php/substr what 1))
+   ##                        all-classes)
+   ##       _ (println filtered)
+   ##       completions-v (map (partial str "\\")
+   ##                          filtered)
+   ##       ]
+
+   ##   (map (fn [x] {:candidate x :type "class"}) completions-v)
+   ##   )
+
+   # Complete Phel items / PHP classes
+   (let [phel-def-names (all-phel-def-names)
+         php-classes (filter (complement  # not ran cause php/
+                              (partialr            # discard internal AbstractFn classes
+                               php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous"))
+                             (php/get_declared_classes))
+         all (concat phel-def-names php-classes)]
+     (->> all
+        (filter (partialr php/str_starts_with what))
+        (map (fn [x] {:candidate x :type (resolve-completion-type-phel x)}))))
+   )
+  )
+
+
+(comment
+  (count (first (vector (php/get_declared_classes)))) # 828
+
+  (count (first
+
+          )
+         )
+  (take 5 (php/get_declared_classes))
+  (take 5 (map identity (php/get_declared_classes)))
+
+  ## All starting with Phel\\
+  (filter (complement (partialr php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous")) (php/get_declared_classes))
+
+  (filter (complement (partialr php/str_starts_with "Phel\\")
+                      ) (php/get_declared_classes))
+
+  (take 5 (php/get_declared_classes))
+
+  ## TODO Drop ones starting with Phel\Lang\AbstractFn@anonymous
+  )
+
 
 # (complete "php/te")
 # (complete "php/preg")
