@@ -6,7 +6,6 @@
                                     apropos
                                     bencode-decode
                                     bencode-encode
-                                    phel-doc
                                     ])
   (:require phel\repl :refer [doc require use print-colorful println-colorful])
   )
@@ -31,6 +30,9 @@
 
 
 #### Operation logic
+
+(defn phel-doc [sym]
+  (with-output-buffer (doc sym)))
 
 (defn complete "return list of completions for string" [what]
   (cond
@@ -177,6 +179,18 @@
               :name sym}
         resp info]  # {:info info}
     (send-fn request resp)))
+
+(comment
+  (def refclass (php/new \ReflectionClass "IntlChar"))
+  (php/-> refclass (__toString))
+
+  (for [m :in (php/-> refclass (getMethods))]
+    (php/-> m (getName))
+    ## (php/-> m (getDocComment))
+    )
+
+
+  )
 
 ## (bencode-encode {:op "macroexpand" :code "(def foo 1)"})
 ## d4:code11:(def foo 1)2:op11:macroexpande

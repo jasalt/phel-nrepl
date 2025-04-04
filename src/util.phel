@@ -35,15 +35,14 @@
         res (php/-> cf (compile s opts))]
     (php/-> res (getPhpCode))))
 
+## From Phel REPL ns
+## https://github.com/phel-lang/phel-lang/blob/main/src/phel/repl.phel
 
-## (defn phel-eval [s]  # TODO remove as (eval (read-string x)) is better
-##   (let [opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
-##         rf (php/new \Phel\Run\RunFacade)]
-##   (php/-> rf (eval s opts))))
+(defn- clean-doc [str]
+  (php/trim (php/str_replace (php/array "```phel\n" "```") "" str)))
 
-
-## ILT utils
-## Source: https://codeberg.org/mmontone/interactive-lang-tools/
+## From ILT utils
+## https://codeberg.org/mmontone/interactive-lang-tools/
 
 (defn partialr [f & args1]
   "partial right"
@@ -51,9 +50,6 @@
     (apply f (concat args2 args1))))
 
 # ((partialr str "lala") "foo")
-
-(defn- clean-doc [str]
-  (php/trim (php/str_replace (php/array "```phel\n" "```") "" str)))
 
 (defn read-php-obj-prop [obj prop]
   (let [r (php/new \ReflectionObject obj)
@@ -143,10 +139,6 @@
 
 ## (all-php-def-names)
 ## type: function, variable, namespace
-
-
-(defn phel-doc [sym]
-  (with-output-buffer (doc sym)))
 
 # (compile '(defn foo [x] x))
 
