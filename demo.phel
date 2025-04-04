@@ -1,31 +1,60 @@
 ## Demo namespace for Cider nREPL experiments
 
-## Cider:
-## (setq nrepl-log-messages t)
-## (setq cider-repl-init-code "")
-## (setq cider-info-form "")
+## Require test, source:
+## https://github.com/phel-lang/phel-lang/blob/main/src/phel/repl.phel
 
-(def foo 1)
-(+ foo 1)
+(def build-facade (php/new \Phel\Build\BuildFacade))
 
-(with-output-buffer (php/print_r (php/getenv)))
+(def- src-dirs (php/array))
 
-## (ns user
-##   (:require phel\repl :refer [doc require use print-colorful println-colorful]))
+(defn- get-global-env []
+  (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance)))
 
-
-## ok
-(require phel-nrepl\util :as util)
-(with-output-buffer (php/print_r (util/show-user-defined)))
-(util/phel-doc with-output-buffer)
-
-(require phel\repl :as repl)
-(with-output-buffer (repl/doc with-output-buffer))
+(defn- loaded-namespaces []
+  (php/-> (php/:: \Phel\Lang\Registry (getInstance)) (getNamespaces)))
 
 
-## fail
-(require phel\html :as html)
-(require phel\html :refer [html raw-string])
+(defn- eval-file [file]
+  (php/-> build-facade (evalFile file)))
 
-(html [:div "foo"])
-(raw-string "<a></a>")  # can't resolve .. earlier requires also start failing
+(defn- eval-namespace [namespace]
+  (let [dependencies (php/-> build-facade (getDependenciesForNamespace src-dirs (php/array namespace)))]
+    (foreach [dep dependencies]
+      (when-not (php/in_array (php/-> dep (getNamespace)) (loaded-namespaces))
+        (eval-file (php/-> dep (getFile)))))))
+
+(defn- extract-alias [sym options]
+  (if (:as options)
+    (:as options)
+    (let [parts (php/explode "\\" (name sym))
+          last (pop parts)]
+      (php/:: \Phel\Lang\Symbol (create last)))))
+
+(defn- set-ns [namespace]
+  (set-var *ns* namespace))
+
+(defn- require-namespace
+  [namespace alias refers]
+  (let [env (get-global-env)
+        current-ns *ns*]
+    (php/-> env (addRequireAlias current-ns alias namespace))
+    (foreach [r refers]
+      (php/-> env (addRefer current-ns r namespace)))
+    (eval-namespace namespace)
+    (php/-> (get-global-env) (setNs current-ns))
+    (set-ns current-ns)
+    namespace))
+
+(require-namespace phel\html html [])  # Cannot resolve symbol 'phel\str'
+
+(defmacro require
+  "Requires a Phel module into the environment."
+  [sym & args]
+  (let [options (apply hash-map args)
+        alias (extract-alias sym options)
+        refers (or (:refer options) [])]
+    `(require-namespace ',sym ',alias ',refers)))
+
+(require phel\html :as html)  # No error
+
+(type html/html)  # Cannot resolve symbol 'html/html'
