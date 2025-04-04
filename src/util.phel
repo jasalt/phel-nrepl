@@ -141,64 +141,12 @@
         user-functions (get functions "external")]
     (map str (concat internal-functions user-functions))))
 
-
-## NOTE: cider-completion-annotations-alist defines supported types
-
-## Phel
-## ("function" "f")
-## ("keyword" "k")
-## ("var" "v")
-## ("macro" "m")  # how to distinct phel function from macro?
-## ("namespace" "n")
-
-## PHP
-## ("class" "c")  # complete by startwith \ (?)
-## ("static-method" "sm")
-## ("field" "fi")
-## ("import" "i")
-## ("local" "l")
-## ("method" "me")
-## ("protocol" "p")
-## ("protocol-function" "pf")
-## ("record" "r")
-## ("special-form" "s")
-## ("static-field" "sf")
-## ("type" "t")
-
-
 ## (all-php-def-names)
 ## type: function, variable, namespace
 
 
 (defn phel-doc [sym]
   (with-output-buffer (doc sym)))
-
-(comment
-  (count (first (vector (php/get_declared_classes)))) # 828
-
-  (count (first
-
-          )
-         )
-  (take 5 (php/get_declared_classes))
-  (take 5 (map identity (php/get_declared_classes)))
-
-  ## All starting with Phel\\
-  (filter (complement (partialr php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous")) (php/get_declared_classes))
-
-  (filter (complement (partialr php/str_starts_with "Phel\\")
-                      ) (php/get_declared_classes))
-
-  (take 5 (php/get_declared_classes))
-
-  ## TODO Drop ones starting with Phel\Lang\AbstractFn@anonymous
-  )
-
-
-# (complete "php/te")
-# (complete "php/preg")
-# (complete "php/str")
-# (complete "pr")
 
 # (compile '(defn foo [x] x))
 
@@ -221,8 +169,6 @@
      (map (fn [def] (-> (make-definition def "function" "function")
                       (put :name (str "php/" def))))
           matching-php-defs))))
-
-
 
 
 # (apropos "array")
@@ -279,12 +225,14 @@
      (find-variables name)
      [])))
 
-# (find-definitions "php/array_merge" "function")
-# (find-definitions "php/array_merges" "function")
-# (find-definitions "lala" "function")
-# (find-definitions "php/array_merge" nil)
-# (find-definitions "str" nil)
+## (find-definitions "php/array_merge" "function")
+## (find-definitions "php/array_merges" "function")
+## (find-definitions "lala" "function")
+## (find-definitions "php/array_merge" nil)
+## (find-definitions "str" nil)
+
 (comment
+  ## This is from ILT, used only for reference
 
   (defn handle-request []
     (let [request (http/request-from-globals)
@@ -338,19 +286,7 @@
           ## We handled the ILT jsonrpc request. Quit now.
           (php/exit 0)
           ))))
-  ## (get [] 3)
-  ## (+ 2 2)
 
-  ## (php/str_starts_with "this is a test" "this")
-  ## (php/str_starts_with "this is a test" "that")
-
-  ## (lalal)
-
-  ## (http/request-from-globals)
-
-  ## (php/json_encode 22)
-
-  ## (php/function_exists "count")
   ## (php/-> (php/new \ReflectionFunction "count") (getParameters))
   ## (php/-> (php/new \ReflectionFunction "count") (getDocComment))
 
@@ -362,12 +298,10 @@
   ## (php/-> (php/new \ReflectionFunction "array_merge") (getFilename))
 
   ## (php/get_class_methods "Symfony\Component\String\AbstractString")
-
-
   )
 
 
-## Bencode conversion utilities
+##### Bencode conversion utilities
 
 (defn valid-key?
   "Checks if `v` is a valid Bencode key or can be converted to a Bencode key."

@@ -30,7 +30,7 @@
   (php/-> logger (error (str s))))
 
 
-#### Utilities
+#### Operation logic
 
 (defn complete "return list of completions for string" [what]
   (cond
@@ -85,8 +85,31 @@
    )
   )
 
-#### Handlers
+## NOTE: cider-completion-annotations-alist defines supported types:
 
+## Phel
+## ("function" "f")
+## ("keyword" "k")
+## ("var" "v")
+## ("macro" "m")  # how to distinct phel function from macro?
+## ("namespace" "n")
+
+## PHP
+## ("class" "c")  # complete by startwith \ (?)
+## ("static-method" "sm")
+## ("field" "fi")
+## ("import" "i")
+## ("local" "l")
+## ("method" "me")
+## ("protocol" "p")
+## ("protocol-function" "pf")
+## ("record" "r")
+## ("special-form" "s")
+## ("static-field" "sf")
+## ("type" "t")
+
+
+#### Operation handlers
 
 (declare ops)
 
