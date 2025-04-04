@@ -142,12 +142,8 @@
     (map str (concat internal-functions user-functions))))
 
 
-## REFACTOR: should probably resolve this info earlier
-(defn resolve-completion-type-phel [s]
-  (cond (function? s) "function"
-        (keyword? s) "keyword"
-        true "?")
-  )
+## NOTE: cider-completion-annotations-alist defines supported types
+
 ## Phel
 ## ("function" "f")
 ## ("keyword" "k")
@@ -155,14 +151,6 @@
 ## ("macro" "m")  # how to distinct phel function from macro?
 ## ("namespace" "n")
 
-
-## TODO refactor
-(defn resolve-completion-type-php [s]
-  (cond (function? s) "function"
-        (php-object? s) "class"  # TODO
-        (php-resource? s) "class" # TODO
-        true "?")
-  )
 ## PHP
 ## ("class" "c")  # complete by startwith \ (?)
 ## ("static-method" "sm")
@@ -177,57 +165,10 @@
 ## ("static-field" "sf")
 ## ("type" "t")
 
-## NOTE: cider-completion-annotations-alist defines supported types
 
 ## (all-php-def-names)
 ## type: function, variable, namespace
-(defn complete "return list of completions for string" [what]
-  (cond
-    # If the thing to complete starts with php/, then return php completions.
-   (php/str_starts_with what "php/")
-   (let [what-to-complete (php/substr what 4)]
-     (let [functions (php/get_defined_functions)
-           internal-functions (get functions "internal")
-           user-functions (get functions "user")
 
-           completions-v (map (partial str "php/")
-                              (filter (partialr php/str_starts_with what-to-complete)
-                                      (concat internal-functions user-functions)))]
-       (map (fn [x] {:candidate x :type (resolve-completion-type-php x)}) completions-v)
-       )
-     )
-
-   ## When starts with '\' it's known to be a class
-   (php/str_starts_with what "\\")
-   (let [classes (filter (complement  # not ran cause php/
-                          (partialr            # discard internal AbstractFn classes
-                           php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous"))
-                             (php/get_declared_classes))
-         matches (filter (partialr php/str_starts_with (php/substr what 1))
-                          classes)
-
-         ## Add \ to the beginning of returned class names
-
-         completions-v (map (partial str "\\") matches)  # return with beginning bslash
-         ]
-     (map (fn [x] {:candidate x :type "class"}) completions-v)
-     )
-
-
-   ## Otherwise might or might not be a class name
-
-   # Complete Phel items / PHP classes
-   (let [phel-def-names (all-phel-def-names)
-         php-classes (filter (complement  # not ran cause php/
-                              (partialr            # discard internal AbstractFn classes
-                               php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous"))
-                             (php/get_declared_classes))
-         all (concat phel-def-names php-classes)]
-     (->> all
-        (filter (partialr php/str_starts_with what))
-        (map (fn [x] {:candidate x :type (resolve-completion-type-phel x)}))))
-   )
-  )
 
 (defn phel-doc [sym]
   (with-output-buffer (doc sym)))

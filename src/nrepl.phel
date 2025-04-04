@@ -1,7 +1,9 @@
 (ns phel-nrepl\nrepl
   (:require phel\str :as str)
   (:require phel-nrepl\util :refer [callable->closure
-                                    complete apropos
+                                    partialr
+                                    all-phel-def-names
+                                    apropos
                                     bencode-decode
                                     bencode-encode
                                     phel-doc
@@ -30,6 +32,58 @@
 
 #### Utilities
 
+(defn complete "return list of completions for string" [what]
+  (cond
+    # If the thing to complete starts with php/, then return php completions.
+   (php/str_starts_with what "php/")
+   (let [what-to-complete (php/substr what 4)]
+     (let [functions (php/get_defined_functions)
+           internal-functions (get functions "internal")
+           user-functions (get functions "user")
+
+           completions-v (map (partial str "php/")
+                              (filter (partialr php/str_starts_with what-to-complete)
+                                      (concat internal-functions user-functions)))]
+       (map (fn [x] {:candidate x :type (cond (function? x) "function"
+                                              (php-object? x) "class"   # TODO
+                                              (php-resource? x) "class" # TODO
+                                              true "?")}) completions-v)
+       )
+     )
+
+   ## When starts with '\' it's known to be a class
+   (php/str_starts_with what "\\")
+   (let [classes (filter (complement  # not ran cause php/
+                          (partialr            # discard internal AbstractFn classes
+                           php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous"))
+                             (php/get_declared_classes))
+         matches (filter (partialr php/str_starts_with (php/substr what 1))
+                          classes)
+
+         ## Add \ to the beginning of returned class names
+
+         completions-v (map (partial str "\\") matches)  # return with beginning bslash
+         ]
+     (map (fn [x] {:candidate x :type "class"}) completions-v)
+     )
+
+
+   ## Otherwise might or might not be a class name
+
+   # Complete Phel items / PHP classes
+   (let [phel-def-names (all-phel-def-names)
+         php-classes (filter (complement  # not ran cause php/
+                              (partialr            # discard internal AbstractFn classes
+                               php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous"))
+                             (php/get_declared_classes))
+         all (concat phel-def-names php-classes)]
+     (->> all
+        (filter (partialr php/str_starts_with what))
+        (map (fn [x] {:candidate x :type (cond (function? x) "function"
+                                               (keyword? x)  "keyword"
+                                               "?")}))))
+   )
+  )
 
 #### Handlers
 
