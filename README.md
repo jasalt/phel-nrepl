@@ -34,14 +34,33 @@ Logging: (setq nrepl-log-messages t)
 
 Developed using clojure-mode with small tweaks https://codeberg.org/jasalt/.emacs.d/src/branch/main/personal/phel.el.
 
+Cider does not recognize `\` as character to include in beginning of completion prefix due to `thingatpt.el` which needs custom setting such as:
+
+```
+(defun phel-bounds-of-symbol-at-point ()
+  "Get bounds of symbol at point in Phel, including backslashes."
+  (save-excursion
+    (skip-syntax-backward "w_\\")
+    (let ((start (point)))
+      (skip-syntax-forward "w_\\")
+      (when (> (point) start)
+        (cons start (point))))))
+
+(add-to-list 'bounds-of-thing-at-point-provider-alist
+             (cons 'symbol (lambda ()
+                            (when (eq major-mode 'phel-mode)
+                              (phel-bounds-of-symbol-at-point)))))
+```
+
 ### Calva
 Logging: toggle nREPL logging enabled
 
 - Startup command needs to be disabled/modified, that was solved with `(setq cider-repl-init-code "")` on Cider.
   - Answer probably in https://calva.io/customizing-jack-in-and-connect/
+  - Pez: For the startup code, I think it is calva.autoEvaluateCode you need to update.
 - Clojure standard lib is included in the completion quite aggressively which I didn't note with Cider.
   - Needs disabling somehow?
-
+  - Pez: That’s probably clojure-lsp. You may need to disable some things in its config. But you could start with confirming by stopping clojure-lsp. (Can be done via the button in the status bar, and other ways.)
 
 ## Resources
 Some helpful resources:

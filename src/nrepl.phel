@@ -67,8 +67,8 @@
 
 ## https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#complete
 (defn handle-complete [request send-fn]
-  (let [completions (complete (get request :prefix))
-        _ (log-info completions)
+  (let [prefix (get request :prefix)
+        completions (complete prefix)
         resp {:completions completions :status ["done"]}]
     (send-fn request resp)))
 

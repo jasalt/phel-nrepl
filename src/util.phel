@@ -155,6 +155,8 @@
 ## ("macro" "m")  # how to distinct phel function from macro?
 ## ("namespace" "n")
 
+
+## TODO refactor
 (defn resolve-completion-type-php [s]
   (cond (function? s) "function"
         (php-object? s) "class"  # TODO
@@ -195,18 +197,24 @@
        )
      )
 
-   ## (php/str_starts_with what "\\")  ## \ not recognized on cider
-   ## (let [all-classes (php/get_declared_classes)
-   ##       ## The returned list of classes does not include the \ in beginning
-   ##       filtered (filter (partialr php/str_starts_with (php/substr what 1))
-   ##                        all-classes)
-   ##       _ (println filtered)
-   ##       completions-v (map (partial str "\\")
-   ##                          filtered)
-   ##       ]
+   ## When starts with '\' it's known to be a class
+   (php/str_starts_with what "\\")
+   (let [classes (filter (complement  # not ran cause php/
+                          (partialr            # discard internal AbstractFn classes
+                           php/str_starts_with "Phel\\Lang\\AbstractFn@anonymous"))
+                             (php/get_declared_classes))
+         matches (filter (partialr php/str_starts_with (php/substr what 1))
+                          classes)
 
-   ##   (map (fn [x] {:candidate x :type "class"}) completions-v)
-   ##   )
+         ## Add \ to the beginning of returned class names
+
+         completions-v (map (partial str "\\") matches)  # return with beginning bslash
+         ]
+     (map (fn [x] {:candidate x :type "class"}) completions-v)
+     )
+
+
+   ## Otherwise might or might not be a class name
 
    # Complete Phel items / PHP classes
    (let [phel-def-names (all-phel-def-names)
@@ -221,6 +229,8 @@
    )
   )
 
+(defn phel-doc [sym]
+  (with-output-buffer (doc sym)))
 
 (comment
   (count (first (vector (php/get_declared_classes)))) # 828
@@ -472,8 +482,8 @@
     (php->phel php-data)))
 
 
-
 ## \Rhilip\Bencode\Bencode
+
 # // Decodes a BEncoded string
 # Bencode::decode($string);
 
@@ -481,9 +491,3 @@
 ## Bencode::encode($data);
 
 ## catch \Rhilip\Bencode\ParseException
-
-
-## phel/repl wrapping
-
-(defn phel-doc [sym]
-  (with-output-buffer (doc sym)))
