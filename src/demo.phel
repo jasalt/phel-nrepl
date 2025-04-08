@@ -1,0 +1,223 @@
+(ns phel-nrepl\demo)
+## Demo namespace
+
+##### TODO nREPL runtime require debugging
+
+(defn- get-global-env []
+  (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance)))
+
+(defn get-instance-private-property [instance property]
+  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
+    (php/-> refprop (setAccessible true))
+    (php/-> refprop (getValue instance))))
+
+(defn set-instance-private-property [instance property value]
+  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
+    (php/-> refprop (setAccessible true))
+    (php/-> refprop (setValue instance value))))
+
+(get-instance-private-property (get-global-env) "ns")
+
+(set-instance-private-property (get-global-env) "ns" "phel-nrepl\\demo1") # changes ns
+
+
+(get-instance-private-property (get-global-env) "ns")
+
+(phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "definitions"))
+(keys (phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "definitions")))
+
+(:phel-nrepl\demo (phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "definitions")))
+(:phel-nrepl\nrepl (phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "definitions")))
+
+
+(phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "refers"))
+
+(phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "requireAliases"))
+(phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "useAliases"))
+(phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "interfaces"))
+(get-instance-private-property (get-global-env) "allowPrivateAccessCounter")
+
+
+##### Test require
+(ns phel-nrepl\nrepl
+  (:require phel\html :as html))
+
+(ns phel-nrepl\nrepl
+  (:require phel\html :refer [raw-string]))
+
+(:phel-nrepl\nrepl (phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "refers")))
+
+(keys
+ (phel-nrepl\util/php->phel (get-instance-private-property (get-global-env) "useAliases")))
+
+(type html) # Phel\Compiler\Domain\Analyzer\Exceptions\AnalyzerException: Cannot resolve symbol 'html'
+(type raw-string)
+(type apropos)
+
+(def empty-node-environment (php/:: \Phel\Compiler\Domain\Analyzer\Environment\NodeEnvironment (empty)))
+
+(php/-> (get-global-env) (resolve 'raw-string empty-node-environment))
+
+
+## CRASH when resolving sym referred to src/nrepl.phel
+## refer set in ns form in
+## file referred by the main nrepl server process namespace ns form at
+## - https://codeberg.org/jasalt/phel-nrepl/src/branch/master/src/nrepl.phel#L6
+(php/-> (get-global-env) (resolve 'apropos empty-node-environment))
+
+
+
+#### Misc Issues / weirdness
+(set-var *ns* 'foo)  # set-ns as in Phel repl.phel does not change ns properly (?)
+
+*ns* ## => foo
+(get-instance-private-property (get-global-env) "ns") ## => "phel-nrepl\\nrepl"
+
+## - https://github.com/phel-lang/phel-lang/blob/acf3222dd6a1c30f277625018d0304c80d6db578/src/phel/repl.phel#L60
+## - https://github.com/phel-lang/phel-lang/blob/acf3222dd6a1c30f277625018d0304c80d6db578/src/phel/core.phel#L38
+
+
+## namespace related fn's work with GlobalEnvironment
+## https://github.com/phel-lang/phel-lang/blob/acf3222dd6a1c30f277625018d0304c80d6db578/src/phel/core.phel#L1862
+(def bar 1)
+(namespace 'bar)  # ""  (??)
+(full-name 'bar) # bar
+
+(namespace '*)
+(namespace 'set-instance-private-property)
+
+(+ 1 1)
+
+
+
+#### (comment
+
+  (keys (util/php->phel (get-ns-definitions *ns*)))
+
+  (keys (util/php->phel (get-ns-definitions 'phel-nrepl\util)))
+
+)
+
+
+## Random
+
+(type str/starts-with?)
+
+(keys (util/php->phel (get-ns-definitions *ns*)))
+
+(keys (phel-nrepl\util/php->phel (get-ns-definitions *ns*)))
+
+(keys (phel-nrepl\util/php->phel (get-ns-definitions \phel\html)))
+(keys (phel-nrepl\util/php->phel (get-ns-definitions 'phel)))
+
+(php/-> (get-global-env) (getNs)) # phel_nrepl\nrepl
+(php/-> (get-global-env) (setNs "user")) # phel_nrepl\nrepl
+(keys (phel-nrepl\util/php->phel (phel-nrepl\nrepl/get-ns-definitions *ns*)))
+## *ns* does not update
+
+(defn in-user-ns [] 1)  # seems to go to original ns, not to one switched to...
+
+(keys (phel-nrepl\util/php->phel (phel-nrepl\nrepl/get-ns-definitions "user")))
+
+(require-namespace 'phel-nrepl\nrepl 'nrepl ['get-ns-definitions])
+
+
+
+(type phel\html/raw-string)
+
+(+ 1 1)
+
+(type phel-nrepl\util/php->phel)
+
+###$ Read private properties from
+## https://github.com/phel-lang/phel-lang/blob/main/src/php/Compiler/Domain/Analyzer/Environment/GlobalEnvironment.php#L280
+
+*ns*  # phel_nrepl\nrepl
+(def ge (get-global-env))
+
+(def reflection (php/new \ReflectionClass ge))
+(php/-> reflection (getProperty "interfaces"))
+
+(php-reflect-class (get-global-env))
+
+(php-unlock-private-method ge "resolveInterfaceOrDefinitionForCurrentNs")
+
+(def sym (php/new \Phel\Lang\Symbol *ns* "foo"))
+(type sym) # :symbol
+(type 'bar) # :symbol
+
+(def empty-node-environment (php/:: \Phel\Compiler\Domain\Analyzer\Environment\NodeEnvironment (empty)))
+
+(def asdf 1)
+
+(php/-> ge (resolveInterfaceOrDefinitionForCurrentNs 'bar empty-node-environment *ns*))
+
+(defmacro php-call-private-method [obj method & args]
+  (let [reflection (php/new \ReflectionClass obj)
+        method-obj (php/-> reflection (getMethod method))]
+    (php/-> method-obj (setAccessible true))
+    `(php/-> method-obj invoke (,@args))
+    )
+  )
+
+(php-call-private-method ge "resolveInterfaceOrDefinitionForCurrentNs"
+                         'bar empty-node-environment *ns*)
+
+
+
+(resolve 'asdf)
+
+(resolve 'require)
+
+(php-reflect-class 'require)
+(php-reflect-function 'require)
+
+(with-output-buffer (doc str))
+
+(resolve 'phel\str)
+
+
+(type resolve)
+(type doc)
+
+## TODO
+
+
+(ns phel-nrepl\demo
+  (:require phel\html :refer [html]))
+
+(ns phel-nrepl\demo
+  (:require phel\html :as [html]))
+
+(type html/raw-string)
+
+# (require phel\html :refer [html])
+
+(ns phel-nrepl\demo
+  (:require phel\html :refer [htmlfoo]))
+
+
+*ns*  # => phel_nrepl\demo
+
+(defn get-ns-definitions [ns]
+  (php/-> (php/:: \Phel\Lang\Registry (getInstance)) (getDefinitionInNamespace ns)))
+
+(keys (get-ns-definitions *ns*))
+
+## (type html/raw-string) # fail
+
+
+
+(defn php-reflect-class [s]
+  (let [refobj (php/new \ReflectionClass s)]
+    (php/-> refobj (__toString))))
+
+
+(php/-> (get-global-env) (getNs)) # => "phel-nrepl\\demo"
+
+(php/-> (get-global-env) (addRequireAlias *ns* 'html 'phel\html))
+
+(php/-> (get-global-env) (hasRequireAlias *ns* 'html))
+(php/-> (get-global-env) (hasRequireAlias *ns* 'foo))
+
+(type html/raw-string) ## Cannot resolve symbol 'html/raw-string'

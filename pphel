@@ -1,0 +1,8 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/patchwork.phar';
+
+require __DIR__ . '/tracer.php';
+
+include __DIR__ . '/vendor/bin/phel';
