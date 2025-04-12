@@ -230,15 +230,15 @@
 
 
 (defn- handle-request [request send-fn]
-
-  (let [op (get request :op)
-        op-fn (get ops (keyword op))]  # keyword conversion added here
-    (if op-fn
+  (if-let [op (get request :op)]
+    (if-let [op-fn (get ops (keyword op))]
       (op-fn request send-fn)
       (do
         (log-warning (str "Unhandled operation" op))
-        (send-fn request {"status" ["error" "unknown-op" "done"]}))))
-  )
+        (send-fn request {"status" ["error" "unknown-op" "done"]})))  # TODO
+    (do
+      (log-warning (str "Operation missing from request"))
+      (send-fn request {"status" ["error" "missing-op" "done"]}))))
 
 #### Server
 
