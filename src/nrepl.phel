@@ -252,20 +252,22 @@
                server-address " - nrepl://" server-address ":" port "\n"))
 (log-info "TODO send startup message direct to stdout")
 
+## TODO
+## - handle multiple forms and not just one per eval
+
 (loop []
   (when-let [socket (php/-> server (accept))]
     (php/amp\async
-     (callable->closure
+     (callable->closure  ## makes Phel anonymous fn compatible with AMPHP
       (fn []
-        (let [send-fn (make-send-fn socket)]
-          (log-info (str "accepted connection from " address))
-          (loop []
-            (when-let [chunk (php/rtrim (php/-> socket (read)))]
-              (try
-                ## (log-debug (str "RECEIVED: " chunk))
-                (handle-request (bencode-decode chunk) send-fn)
-                (catch
-                    \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
-              (recur)))
-          (php/-> socket (end))))))
+        (log-info (str "accepted connection from " address))
+        (loop [send-fn (make-send-fn socket)]
+          (when-let [chunk (php/rtrim (php/-> socket (read)))]
+            (try
+              ## (log-debug (str "RECEIVED: " chunk))
+              (handle-request (bencode-decode chunk) send-fn)
+              (catch
+                  \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
+            (recur send-fn)))
+        (php/-> socket (end)))))
     (recur)))
