@@ -7,7 +7,8 @@
                                     bencode-decode
                                     bencode-encode
                                     ])
-  (:require phel\repl :refer [doc require use print-colorful println-colorful])
+  ## (:require phel\repl :refer [doc require use print-colorful println-colorful])
+  (:require phel\repl :refer [resolve require use doc])
   )
 
 #### Logging
@@ -32,7 +33,7 @@
 #### Operation logic
 
 (defn phel-doc [sym]
-  (with-output-buffer (doc sym)))
+  (with-output-buffer (println "FOO")))
 
 (defn complete "return list of completions for string" [what]
   (cond
@@ -132,7 +133,8 @@
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
         _ (log-debug code-input)
-        eval-res (eval (read-string (get request :code)))
+        eval-res (eval (read-string (get request :code)))  # Reads the first phel expression from the string
+        ## TODO parse all https://github.com/phel-lang/phel-lang/blob/acf3222dd6a1c30f277625018d0304c80d6db578/src/php/Compiler/CompilerFacade.php#L143
         eval-res-str (str eval-res)
         resp {:value eval-res-str :status ["done"]}]
     (send-fn request resp)
@@ -180,17 +182,6 @@
         resp info]  # {:info info}
     (send-fn request resp)))
 
-(comment
-  (def refclass (php/new \ReflectionClass "IntlChar"))
-  (php/-> refclass (__toString))
-
-  (for [m :in (php/-> refclass (getMethods))]
-    (php/-> m (getName))
-    ## (php/-> m (getDocComment))
-    )
-
-
-  )
 
 ## (bencode-encode {:op "macroexpand" :code "(def foo 1)"})
 ## d4:code11:(def foo 1)2:op11:macroexpande
@@ -239,13 +230,15 @@
 
 
 (defn- handle-request [request send-fn]
+
   (let [op (get request :op)
         op-fn (get ops (keyword op))]  # keyword conversion added here
     (if op-fn
       (op-fn request send-fn)
       (do
         (log-warning (str "Unhandled operation" op))
-        (send-fn request {"status" ["error" "unknown-op" "done"]})))))
+        (send-fn request {"status" ["error" "unknown-op" "done"]}))))
+  )
 
 #### Server
 
@@ -260,22 +253,19 @@
 (log-info "TODO send startup message direct to stdout")
 
 (loop []
-  (let [socket (php/-> server (accept))]
-    (when socket
-      (php/amp\async
-       (callable->closure
-        (fn []
-          (let [send-fn (make-send-fn socket)]
-            (log-info (str "accepted connection from " address))
-            (loop []
-              (let [chunk (php/-> socket (read))
-                    chunk (when chunk (php/rtrim chunk))]
-                (when chunk  # TODO: add when-let macro to Phel
-                  (try
-                    ## (log-debug (str "RECEIVED: " chunk))
-                    (handle-request (bencode-decode chunk) send-fn)
-                    (catch
-                        \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
-                  (recur))))
-            (php/-> socket (end))))))
-      (recur))))
+  (when-let [socket (php/-> server (accept))]
+    (php/amp\async
+     (callable->closure
+      (fn []
+        (let [send-fn (make-send-fn socket)]
+          (log-info (str "accepted connection from " address))
+          (loop []
+            (when-let [chunk (php/rtrim (php/-> socket (read)))]
+              (try
+                ## (log-debug (str "RECEIVED: " chunk))
+                (handle-request (bencode-decode chunk) send-fn)
+                (catch
+                    \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
+              (recur)))
+          (php/-> socket (end))))))
+    (recur)))
