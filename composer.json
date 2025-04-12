@@ -11,8 +11,7 @@
     }
   ],
   "require": {
-    "phel-lang/phel-lang": "^0.16.1",
-	"jasalt/phel-bencode": "dev-master",
+    "phel-lang/phel-lang": "dev-main",
     "amphp/log": "^2.0",
     "amphp/socket": "^2.3",
     "rhilip/bencode": "1.2.0"
