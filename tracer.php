@@ -5,13 +5,21 @@ use function Patchwork\{redefine, relay, getMethod};
 $logfile = fopen('trace.csv', 'w');
 
 // TODO only patch Phel\Compiler
-redefine('Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment*', function(...$args) use ($logfile) {
+// Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment
+// Phel\Run\Infrastructure\Command
+// Phel\Compiler\Domain\Analyzer*
+// Phel\Lang\Registry* (internal stuff)
+
+// Phel\Compiler\Domain\Analyzer\Environment*
+// Phel\Run\Infrastructure\Command\ReplCommand::loadAllPhelNamespaces
+// Phel\Lang\Registry::addDefinition
+redefine('Phel\Run\RunFacade*', function(...$args) use ($logfile) {
     $begin = microtime(true);
     $result = relay($args);
     $end = microtime(true);
 	$formatted_time = number_format($end - $begin, 4, '.', '');
 
-	$formatted_args = array_map(function($arg) {
+	$formatValue = function($arg) {
         if (is_object($arg)) {
             $class = get_class($arg);
             $representation = [];
@@ -34,8 +42,14 @@ redefine('Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment*', functio
             ];
         }
         return $arg;
-    }, $args);
+    };
 
+	$formatted_args = array_map($formatValue, $args);
+	$formatted_result = $formatValue($result);
+
+	// TODO log return values
     fputcsv($logfile, [$formatted_time, getMethod(), json_encode($formatted_args, JSON_PRETTY_PRINT)]);
+    fputcsv($logfile, ["RETURNS", gettype($result), json_encode($formatted_result)]);  //json_encode($formatted_result, JSON_PRETTY_PRINT)
+
     return $result;
 });
