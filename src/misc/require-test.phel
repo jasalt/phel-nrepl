@@ -1,23 +1,33 @@
 (ns require-test)
 
-## Require test, source:
+## Attempting to require stuff during Phel script (nREPL) runtime as in vanilla REPL
+
 ## https://github.com/phel-lang/phel-lang/blob/main/src/phel/repl.phel
 
 
 ## TODO vanilla REPL runs this, is it needed here?
 ## https://github.com/phel-lang/phel-lang/blob/8b0a5183a007755c9d715d4f7fe3a89947519057/src/php/Run/Infrastructure/Command/ReplCommand.php#L99
 
-
-(php/:: \Phel\Command\CommandFacade (getAllPhelDirectories))
-
 ## (php/:: \Phel\Run\RunFacade (getAllPhelDirectories)) # not possible
 
-(def frames-with-object (filter |(contains-value? (keys $) "object") (php/debug_backtrace php/DEBUG_BACKTRACE_PROVIDE_OBJECT)))
+(defn get-backtrace-object
+  "Fetch object from backtrace by classname e.g. Phel\\Run\\RunFacade"
+  [classname]
+  (let [backtrace (php/debug_backtrace php/DEBUG_BACKTRACE_PROVIDE_OBJECT)
+        frames-with-object (filter |(contains-value? (keys $) "object") backtrace)
+        matching-frame (first (filter |(= (get $ "class") classname) frames-with-object))]
+        (get matching-frame "object")))
 
-(def this-runfacade
-  (-> (filter |(= (get $ "class") "Phel\\Run\\RunFacade") frames-with-object)
-      (first)
-      (get "object")))
+(comment
+  (php/get_class (get-backtrace-object "Phel\\Run\\RunFacade"))
+  ## => Phel\Run\RunFacade
+  )
+
+(def this-runfacade (get-backtrace-object "Phel\\Run\\RunFacade"))
+(map identity (php/-> this-runfacade (getAllPhelDirectories)))
+## => ["/home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Command/../../" "src" "/home/user/dev/phel-nrepl/tests" "/home/user/dev/phel-nrepl/vendor/phel-lang/phel-lang/src/phel"]
+
+
 
 ## // Ugly Hack: Set source directories for the REPL
 ## Registry::getInstance()->addDefinition('phel\\repl', 'src-dirs', $srcDirectories);
