@@ -7,8 +7,77 @@
                                     bencode-decode
                                     bencode-encode
                                     ])
-  ## (:require phel\repl :refer [doc require use print-colorful println-colorful])
-  (:require phel\repl :refer [resolve require use doc])
+  (:require phel-nrepl\repl-utils :refer [resolve doc require use compile-str
+                                          require-namespace eval-namespace])
+  )
+
+#### Debugging
+
+(defn php->phel
+  "Convert a php data structure to a 'phel compatible' value."
+  [x]
+  (cond
+    (indexed? x) (for [v :in x] (php->phel v))
+    (php-array? x) (let [hashmap (transient {})]
+                     (foreach [k v x]
+                       (put hashmap (keyword k) (php->phel v)))
+                     (persistent hashmap))
+    x))
+
+(defn get-global-env []
+  (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance)))
+
+(defn get-registry []
+  (php/:: \Phel\Lang\Registry (getInstance)))
+
+(defn get-backtrace-object
+  "Fetch object from backtrace by classname e.g. Phel\\Run\\RunFacade"
+  [classname]
+  (let [backtrace (php/debug_backtrace php/DEBUG_BACKTRACE_PROVIDE_OBJECT)
+        frames-with-object (filter |(contains-value? (keys $) "object") backtrace)
+        matching-frame (first (filter |(= (get $ "class") classname) frames-with-object))]
+        (get matching-frame "object")))
+
+(defn get-runfacade [] (get-backtrace-object "Phel\\Run\\RunFacade"))
+
+(defn get-instance-private-property [instance property]
+  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
+    (php/-> refprop (setAccessible true))
+    (php/-> refprop (getValue instance))))
+
+(defn set-instance-private-property [instance property value]
+  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
+    (php/-> refprop (setAccessible true))
+    (php/-> refprop (setValue instance value))))
+
+(comment
+  (get-instance-private-property (get-global-env) "ns")
+
+  (set-instance-private-property (get-global-env) "ns")
+
+  (php->phel (get-instance-private-property (get-registry) "definitions"))
+
+  (php->phel (get-instance-private-property (get-registry) "definitionsMetaData"))
+
+  (resolve 'require)
+  (php->phel (get-instance-private-property (get-global-env) "refers"))
+
+  (require phel\html)
+
+  (get-instance-private-property (get-global-env) "ns") #=> phel_nrepl\nrepl
+  *ns* #=> phel_nrepl\nrepl
+
+  (require phel\html :refer [raw-string])
+
+  (php->phel (get-instance-private-property (get-global-env) "requireAliases"))
+
+  (type replvanilla/doc)
+  (type doc)
+
+
+  (resolve 'raw-string)
+  (resolve 'html/raw-string)
+  (resolve 'phel\html/raw-string)
   )
 
 #### Logging
