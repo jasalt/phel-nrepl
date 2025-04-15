@@ -1,13 +1,36 @@
 # Phel-nrepl (WIP)
 
-`Status: work in progress, some initial wiring done`
+`Status: initial wiring is mostly done, being used to write itself but not other programs yet`
 
-Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging [amphp/socket](https://amphp.org/socket) for async processing.
+Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async [amphp/socket](https://amphp.org/socket) server (using PHP 8.1+ Fibers).
 
 ## TODO
 
 - [ ] Fix requiring namespaces / files (Phel issue https://github.com/phel-lang/phel-lang/issues/766)
+  - [x] `require` macro from repl-utils.phel works
+  - [ ] Namespace switching with requires
 - [ ] Investigate `defmacro` issue (`examples/250330-macro-issue.phel` / https://github.com/phel-lang/phel-lang/issues/784)
+
+## Supported nREPL OPS
+- [x] describe
+- [x] clone
+- [ ] eval
+  - [x] single form
+  - [ ] multiple forms
+- Completions
+  - Phel
+    - [x] function names
+	- [ ] namespaces (?)
+  - PHP
+    - [x] global function names
+    - [x] class names
+    - [ ] class methods
+	- [ ] ...
+- [ ] lookup
+- [ ] info
+- [ ] close
+
+See ops map in `src/nrepl.phel` for more hints..
 
 ## Usage
 
@@ -74,25 +97,24 @@ Some helpful resources:
 Nrepl server implementations:
 - https://github.com/ikappaki/basilisp-nrepl-async
 - https://github.com/babashka/nbb/blob/83e2684e86319543aca815a9a7c373d0de7fd487/src/nbb/impl/nrepl_server.cljs
+- https://github.com/squint-cljs/squint/blob/main/src/squint/repl/nrepl_server.cljs
 
-Useful Phel functions in ILT project: https://codeberg.org/mmontone/interactive-lang-tools/src/branch/master/backends/phel/ilt.phel
+Phel ILT project (used for some initial inspiration): https://codeberg.org/mmontone/interactive-lang-tools/src/branch/master/backends/phel/ilt.phel
 
-## Later (?)
-  Stream processing could be utilized if it brings benefit,
-
-  There's support in PHP bencode library that might work:
+## Later / Known issues (?)
+  - Stream processing could be utilized if it brings benefit.
+    - There's support in PHP bencode library that might work:
   https://sandfox.dev/php/bencode/decoding.html#working-with-streams
-
-  Amphp Byte Stream Json decoder example:
+    - Amphp Byte Stream Json decoder example:
   https://github.com/amphp/byte-stream/blob/daa00f2efdbd71565bf64ffefa89e37542addf93/src/functions.php#L168
+  - The bencode library originally used (in composer.json) is not used for now because of Cider issue (https://github.com/clojure-emacs/cider/issues/3786)
 
 ## License
 
 Licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-
 ### Debugging
-
+#### nREPL connection
 Using https://github.com/lambdaisland/nrepl-proxy
 ```
 vendor/bin/phel run src/nrepl.phel
@@ -101,20 +123,13 @@ clojure -Sdeps '{:deps {com.lambdaisland/nrepl-proxy {:mvn/version "0.2.8-alpha"
 
 Connect to proxy listening to port 9999.
 
-## Supported nREPL OPS
-- describe
-- clone (does not give unique id's)
-- eval (simplistic)
-- completions (completion info wip)
-
-Read sources for more hints, docs are not up to date.
-
-## Misc
-
-- The bencode library originally used (in composer.json) is not used for now because of Cider issue (https://github.com/clojure-emacs/cider/issues/3786)
+#### Phel internals
+Logging from Phel internals is available via [Patchwork](https://github.com/phel-lang/phel-lang/discussions/796).
+Modify `tracer.php` with classes/modules to trace and start script with `./pphel run src/nrepl.phel`, tail log files created in the folder during execution.
 
 
-# TODO
+# TODO  (after this section is just some mess)
+
 ## function info
 (defconst cider-info-form "
 (do
