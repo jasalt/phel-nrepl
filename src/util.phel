@@ -1,8 +1,5 @@
 (ns phel-nrepl\util
-  #(:require phel-nrepl\repl :as repl)
-  ##(:require phel\repl :as repl)
-  (:require phel\repl :refer [doc require use print-colorful println-colorful])
-  (:require phel\str :as str) # TODO requiring phel\str fails, won't resolve (?)
+  (:require phel\str :as str) # TODO check require working here?
   )
 
 (defn dd

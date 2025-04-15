@@ -25,9 +25,8 @@
 
 
 (def- src-dirs (to-php-array
-                (apply (partial vector "/home/user/dev/phel-nrepl/src")
+                (apply (partial vector "/home/user/dev/phel-nrepl/src")  # TODO is first item here needed?
                        (php/-> (get-runfacade) (getAllPhelDirectories))))) # Will be set by the repl command
-## (def- src-dirs (php/array)) # Will be set by the repl command
 
 (defn- get-global-env []
   (php/:: GlobalEnvironmentSingleton (getInstance)))

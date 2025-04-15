@@ -51,6 +51,9 @@
     (php/-> refprop (setValue instance value))))
 
 (comment
+  (php->phel (php/-> (php/:: \Phel\Lang\Registry (getInstance))
+          (getNamespaces)))
+
   (get-instance-private-property (get-global-env) "ns")
 
   (set-instance-private-property (get-global-env) "ns")
