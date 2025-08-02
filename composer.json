@@ -11,10 +11,16 @@
     }
   ],
   "require": {
-    "phel-lang/phel-lang": "dev-main",
+    "phel-lang/phel-lang": "0.19.0",
     "amphp/log": "^2.0",
     "amphp/socket": "^2.3",
     "rhilip/bencode": "1.2.0"
+  },
+  "config": {
+    "platform": {
+      "php": "8.3"
+    },
+    "sort-packages": true
   },
   "scripts": {
     "test": "vendor/bin/phel test"
