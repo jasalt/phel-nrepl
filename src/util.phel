@@ -1,5 +1,5 @@
 (ns phel-nrepl\util
-  (:require phel\str :as str) # TODO check require working here?
+  (:require phel\str :as str) ; TODO check require working here?
   )
 
 (defn dd
@@ -26,27 +26,27 @@
   []
   (php/aget (php/get_defined_functions) "user"))
 
-(defn phel-compile [s]  # TODO (compile (read-string expr))
+(defn phel-compile [s]  ; TODO (compile (read-string expr))
   (let [cf (php/new \Phel\Compiler\CompilerFacade)
         opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
         res (php/-> cf (compile s opts))]
     (php/-> res (getPhpCode))))
 
-## From Phel REPL ns
-## https://github.com/phel-lang/phel-lang/blob/main/src/phel/repl.phel
+;; From Phel REPL ns
+;; https://github.com/phel-lang/phel-lang/blob/main/src/phel/repl.phel
 
 (defn- clean-doc [str]
   (php/trim (php/str_replace (php/array "```phel\n" "```") "" str)))
 
-## From ILT utils
-## https://codeberg.org/mmontone/interactive-lang-tools/
+;; From ILT utils
+;; https://codeberg.org/mmontone/interactive-lang-tools/
 
 (defn partialr [f & args1]
   "partial right"
   (fn [& args2]
     (apply f (concat args2 args1))))
 
-# ((partialr str "lala") "foo")
+; ((partialr str "lala") "foo")
 
 (defn read-php-obj-prop [obj prop]
   (let [r (php/new \ReflectionObject obj)
@@ -54,7 +54,7 @@
     (php/-> p (setAccessible true))
     (php/-> p (getValue obj))))
 
-# Hack to access Phel registry private definitions data
+; Hack to access Phel registry private definitions data
 (defn registry-definitions []
   (read-php-obj-prop (php/:: \Phel\Lang\Registry (getInstance))
                      "definitions"))
@@ -62,20 +62,20 @@
 (defn namespaces-list []
   (php/array_keys (registry-definitions)))
 
-# (namespaces-list)
+; (namespaces-list)
 
 (defn namespace-definitions [namespace]
   (-> (registry-definitions)
      (php/aget namespace)
      (php/array_keys)))
 
-# (count (namespace-definitions "phel\core"))
-# (count (->> (registry-definitions) (php/array_values) (mapcat php/array_keys)))
+; (count (namespace-definitions "phel\core"))
+; (count (->> (registry-definitions) (php/array_values) (mapcat php/array_keys)))
 
 (defn- ilt-kind-of [type]
   type)
 
-## JSONRPC protocol
+;; JSONRPC protocol
 
 (defn- php-func-args [fname]
   (->>
@@ -83,7 +83,7 @@
    (map (fn [param] {:name (php/-> param (getName))
                     :type (php/-> param (getType))}))))
 
-# (php-func-args "array_merge")
+; (php-func-args "array_merge")
 
 (defn get-def-meta-data [namespace name]
   (let [registry (php/:: \Phel\Lang\Registry (getInstance))]
@@ -98,12 +98,12 @@
     (case kind
       "function"
       (cond
-        # php func
+        ; php func
         (php/function_exists name)
         (-> def
            (put :args (php-func-args name)))
 
-        # phel fun
+        ; phel fun
         (get-def-meta-data "phel\core" name)
         (let [doc (-> (get-def-meta-data "phel\core" name)
                      (get :doc)
@@ -112,21 +112,21 @@
           (-> def
               (put :args (get args-and-doc 0))
               (put :doc (php/implode "\n" (to-php-array (rest args-and-doc ))))))
-        # default
+        ; default
         def)
       def)))
 
-# (make-definition "array_merge" "function" "function")
-# (make-definition "str" "function" "function")
+; (make-definition "array_merge" "function" "function")
+; (make-definition "str" "function" "function")
 
-# Functions used for generating tables for completions
+; Functions used for generating tables for completions
 
 (defn all-phel-def-names []
   (->> (registry-definitions)
        (php/array_values)
        (mapcat php/array_keys)))
 
-# (all-phel-def-names)
+; (all-phel-def-names)
 
 (defn all-php-def-names []
   (let [functions (php/get_defined_functions)
@@ -134,15 +134,15 @@
         user-functions (get functions "external")]
     (map str (concat internal-functions user-functions))))
 
-## (all-php-def-names)
-## type: function, variable, namespace
+;; (all-php-def-names)
+;; type: function, variable, namespace
 
-# (compile '(defn foo [x] x))
+; (compile '(defn foo [x] x))
 
-## TODO nREPL expected formatting
+;; TODO nREPL expected formatting
 
-## https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#apropos
-## https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L176
+;; https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#apropos
+;; https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L176
 
 (defn- apropos [what]
   (let [phel-defs (all-phel-def-names)
@@ -160,50 +160,50 @@
           matching-php-defs))))
 
 
-# (apropos "array")
+; (apropos "array")
 
 (defn- definition-properties [id properties]
   (cond
-    # php defs
+   ;; php defs
    (php/str_starts_with id "php/")
    (let [php-name (php/substr id 4)]
      (if (php/function_exists php-name)
        (make-definition php-name "function" "function")
        {}))
 
-   # phel defs
+   ;; phel defs
    (some? (partial = id) (all-phel-def-names))
    (make-definition id "function" "function")
 
-   #default
+   ;; default
    {}))
 
-# (definition-properties "str" [])
+;; (definition-properties "str" [])
 
 (defn- find-functions [name]
   (cond
-    # php defs
+    ; php defs
    (php/str_starts_with name "php/")
    (let [php-name (php/substr name 4)]
      (if (php/function_exists php-name)
        [(make-definition php-name "function" "function")]
        []))
 
-   # phel defs
+   ;; phel defs
    (some? (partial = name) (all-phel-def-names))
    [(make-definition name "function" "function")]
 
-   # otherwise
+   ;; otherwise
    []))
 
-# (find-functions "php/array_merge")
-# (find-functions "str")
-# (find-functions "lala")
+;; (find-functions "php/array_merge")
+;; (find-functions "str")
+;; (find-functions "lala")
 
 (defn- find-variables [name]
   [])
 
-(defn- find-definitions [name type] ## TODO
+(defn- find-definitions [name type] ;; TODO
   (concat
    (if (or (not type)
            (= type "function"))
@@ -214,14 +214,14 @@
      (find-variables name)
      [])))
 
-## (find-definitions "php/array_merge" "function")
-## (find-definitions "php/array_merges" "function")
-## (find-definitions "lala" "function")
-## (find-definitions "php/array_merge" nil)
-## (find-definitions "str" nil)
+;; (find-definitions "php/array_merge" "function")
+;; (find-definitions "php/array_merges" "function")
+;; (find-definitions "lala" "function")
+;; (find-definitions "php/array_merge" nil)
+;; (find-definitions "str" nil)
 
 (comment
-  ## This is from ILT, used only for reference
+  ;; This is from ILT, used only for reference
 
   (defn handle-request []
     (let [request (http/request-from-globals)
@@ -237,12 +237,12 @@
                   (jsonrpc-result operation
                                   {:type (type res)
                                    :repr (print-str res)
-                                   :kind (ilt-kind-of (type res))}  # useless?
+                                   :kind (ilt-kind-of (type res))}  ; useless?
                                   ))
                 (catch \Exception e
                   (jsonrpc-error operation (php/-> e (getMessage))))))
 
-            "compile"  # TODO should be "macroexpand?"
+            "compile"  ; TODO should be "macroexpand?"
             (let [expr (first (get operation :params))]
               (try
                 (let [res (compile (read-string expr))]
@@ -267,30 +267,30 @@
             (let [name (get (get operation :params) 0)
                   module (get (get operation :params) 1)
                   type (get (get operation :params) 2)]
-              (jsonrpc-result operation (find-definitions name type))) #
+              (jsonrpc-result operation (find-definitions name type)))
 
             true
             (print "Error: invalid operation"))
 
-          ## We handled the ILT jsonrpc request. Quit now.
+          ;; We handled the ILT jsonrpc request. Quit now.
           (php/exit 0)
           ))))
 
-  ## (php/-> (php/new \ReflectionFunction "count") (getParameters))
-  ## (php/-> (php/new \ReflectionFunction "count") (getDocComment))
+  ;; (php/-> (php/new \ReflectionFunction "count") (getParameters))
+  ;; (php/-> (php/new \ReflectionFunction "count") (getDocComment))
 
-  ## (php/-> (php/new \ReflectionFunction "array_merge") (getParameters))
-  ## (php/-> (php/new \ReflectionFunction "array_merge") (getDocComment))
-  ## (php/-> (php/new \ReflectionFunction "array_merge") (getName))
-  ## (php/-> (php/new \ReflectionFunction "array_merge") (getNamespaceName))
-  ## (php/-> (php/new \ReflectionFunction "array_merge") (getReturnType))
-  ## (php/-> (php/new \ReflectionFunction "array_merge") (getFilename))
+  ;; (php/-> (php/new \ReflectionFunction "array_merge") (getParameters))
+  ;; (php/-> (php/new \ReflectionFunction "array_merge") (getDocComment))
+  ;; (php/-> (php/new \ReflectionFunction "array_merge") (getName))
+  ;; (php/-> (php/new \ReflectionFunction "array_merge") (getNamespaceName))
+  ;; (php/-> (php/new \ReflectionFunction "array_merge") (getReturnType))
+  ;; (php/-> (php/new \ReflectionFunction "array_merge") (getFilename))
 
-  ## (php/get_class_methods "Symfony\Component\String\AbstractString")
+  ;; (php/get_class_methods "Symfony\Component\String\AbstractString")
   )
 
 
-##### Bencode conversion utilities
+;;;;; Bencode conversion utilities
 
 (defn valid-key?
   "Checks if `v` is a valid Bencode key or can be converted to a Bencode key."
@@ -313,8 +313,8 @@
   (cond
     (php/is_iterable x) (phel-iterable->php x)
     (symbol? x) (name x)
-    (keyword? x) (name x)  # TODO should use str to keep keyword recognizable from strings (?)
-    (float? x) (str x)     #      see Clojure for reference
+    (keyword? x) (name x)  ; TODO should use str to keep keyword recognizable from strings (?)
+    (float? x) (str x)     ;      see Clojure for reference
     true x))
 
 (defn php->phel
@@ -339,19 +339,19 @@
   "Decodes a bencode string."
   [s]
   (when-not (string? s) (throw (php/new \InvalidArgumentException "Bencode must be a string.")))
-  ## Calling decode keeping returned format as array, otherwise ArrayObjects are returned
-  ## https://github.com/arokettu/bencode/blob/7bd5447c34846476822c01cb62c0765f94a89e8c/docs/decoding.rst#lists-and-dictionaries
+  ;; Calling decode keeping returned format as array, otherwise ArrayObjects are returned
+  ;; https://github.com/arokettu/bencode/blob/7bd5447c34846476822c01cb62c0765f94a89e8c/docs/decoding.rst#lists-and-dictionaries
   (let [php-data (php/:: \Rhilip\Bencode\Bencode
-                         (decode s))] # dictType
+                         (decode s))] ; dictType
     (php->phel php-data)))
 
 
-## \Rhilip\Bencode\Bencode
+;; \Rhilip\Bencode\Bencode
 
-# // Decodes a BEncoded string
-# Bencode::decode($string);
+; // Decodes a BEncoded string
+; Bencode::decode($string);
 
-## // Encodes string/array/int to a BEncoded string
-## Bencode::encode($data);
+;; // Encodes string/array/int to a BEncoded string
+;; Bencode::encode($data);
 
-## catch \Rhilip\Bencode\ParseException
+;; catch \Rhilip\Bencode\ParseException

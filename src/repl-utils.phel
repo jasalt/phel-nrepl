@@ -8,8 +8,8 @@
   (:use Phel\Compiler\Domain\Analyzer\Environment\NodeEnvironment)
   (:use Phel\Printer\Printer))
 
-## Adapted from https://github.com/phel-lang/phel-lang/blob/8b0a5183a007755c9d715d4f7fe3a89947519057/src/phel/repl.phel
-## With changes to work during custom REPL session
+;; Adapted from https://github.com/phel-lang/phel-lang/blob/8b0a5183a007755c9d715d4f7fe3a89947519057/src/phel/repl.phel
+;; With changes to work during custom REPL session
 
 (def build-facade (php/new BuildFacade))
 
@@ -25,8 +25,8 @@
 
 
 (def- src-dirs (to-php-array
-                (apply (partial vector "/home/user/dev/phel-nrepl/src")  # TODO is first item here needed?
-                       (php/-> (get-runfacade) (getAllPhelDirectories))))) # Will be set by the repl command
+                (apply (partial vector "/home/user/dev/phel-nrepl/src")  ; TODO is first item here needed?
+                       (php/-> (get-runfacade) (getAllPhelDirectories))))) ; Will be set by the repl command
 
 (defn- get-global-env []
   (php/:: GlobalEnvironmentSingleton (getInstance)))
@@ -79,10 +79,10 @@
 (defn require-namespace
   [namespace alias refers]
   (let [env (get-global-env)
-        current-ns (php/-> (get-global-env) (getNs))]  # BUG?: was *ns* which ends having lowcased hyphens:
-    ## phel-nrepl\nrepl does not work with require as it does not mangle import properly:
-    ## (get-instance-private-property (get-global-env) "ns") #=> phel_nrepl\nrepl
-    ## *ns* #=> phel_nrepl\nrepl
+        current-ns (php/-> (get-global-env) (getNs))]  ; BUG?: was *ns* which ends having lowcased hyphens:
+    ;; phel-nrepl\nrepl does not work with require as it does not mangle import properly:
+    ;; (get-instance-private-property (get-global-env) "ns") ; => phel_nrepl\nrepl
+    ;; *ns* ;=> phel_nrepl\nrepl
 
     (php/-> env (addRequireAlias current-ns alias namespace))
     (foreach [r refers]
@@ -148,13 +148,13 @@
 
 
 (comment
-  ## REPL experimentation (in nrepl.phel ns) which led to finding that src-dirs in repl.phel needs to be modified to make it work
+  ;; REPL experimentation (in nrepl.phel ns) which led to finding that src-dirs in repl.phel needs to be modified to make it work
 
   (require phel\html :refer [raw-string])
 
   (require-namespace 'phel\html 'html ['raw-string])
 
-  ## Eval all files as in ReplCommand.php
+  ;; Eval all files as in ReplCommand.php
   (map identity (php/-> (get-runfacade) (getAllPhelDirectories)))
   (apply (partial vector "/home/user/dev/phel-nrepl/src") (php/-> (get-runfacade) (getAllPhelDirectories)))
 
@@ -165,18 +165,18 @@
                         (to-php-array source-dirs)
                         (to-php-array ["phelnrepl" "phel\\core"])))))
 
-  ## This changes (leaves) ns to phel\http after scanning all
+  ;; This changes (leaves) ns to phel\http after scanning all
 
   (dofor [i :in ns-infos]
          (php/-> (get-runfacade) (evalFile i)))
 
-  ## This attempts to start server again which fails with socket already being in use
+  ;; This attempts to start server again which fails with socket already being in use
 
-  (get-instance-private-property (get-global-env) "ns") # => phel\\http
+  (get-instance-private-property (get-global-env) "ns") ; => phel\\http
 
   (set-instance-private-property (get-global-env) "ns" "phelnrepl")
 
-  ## Registry::getInstance()->addDefinition('phel\\repl', 'src-dirs', $srcDirectories);
+  ;; Registry::getInstance()->addDefinition('phel\\repl', 'src-dirs', $srcDirectories);
 
   (php/-> (php/:: \Phel\Lang\Registry (getInstance))
           (addDefinition "phelnrepl" "src-dirs"
