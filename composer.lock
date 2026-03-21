@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b4eae871e0d9ed249c1ddfb5f0a18dec",
+    "content-hash": "ddd071a82c2be933638a6299cd2784f6",
     "packages": [
         {
             "name": "amphp/amp",
@@ -1345,35 +1345,35 @@
         },
         {
             "name": "phel-lang/phel-lang",
-            "version": "v0.21.0",
+            "version": "v0.29.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phel-lang/phel-lang.git",
-                "reference": "2de6d92c669d1c73272494c2dbb14d1a28782f81"
+                "reference": "06ebd8102dcce28b435cd900015390d478775975"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/2de6d92c669d1c73272494c2dbb14d1a28782f81",
-                "reference": "2de6d92c669d1c73272494c2dbb14d1a28782f81",
+                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/06ebd8102dcce28b435cd900015390d478775975",
+                "reference": "06ebd8102dcce28b435cd900015390d478775975",
                 "shasum": ""
             },
             "require": {
-                "gacela-project/gacela": "^1.10",
+                "gacela-project/gacela": "^1.12",
                 "php": ">=8.3",
-                "phpunit/php-timer": "^6.0",
-                "symfony/console": "^7.3"
+                "phpunit/php-timer": "^6.0|^7.0|^8.0",
+                "symfony/console": "^6.0|^7.0|^8.0"
             },
             "require-dev": {
                 "ergebnis/composer-normalize": "^2.48",
                 "ext-readline": "*",
-                "friendsofphp/php-cs-fixer": "^3.86",
+                "friendsofphp/php-cs-fixer": "^3.92",
                 "phpbench/phpbench": "^1.4",
                 "phpstan/phpstan": "^2.1",
                 "phpunit/phpunit": "^10.5",
                 "psalm/plugin-phpunit": "^0.19",
-                "rector/rector": "^2.1",
-                "symfony/var-dumper": "^7.3",
-                "vimeo/psalm": "^5.26"
+                "rector/rector": "^2.2",
+                "symfony/var-dumper": "^7.4",
+                "vimeo/psalm": "^6.14"
             },
             "bin": [
                 "bin/phel"
@@ -1398,11 +1398,11 @@
                 },
                 {
                     "name": "Jose M. Valera Reales",
-                    "email": "chemaclass@outlook.es",
+                    "email": "phel@chemaclass.es",
                     "homepage": "https://chemaclass.com"
                 }
             ],
-            "description": "Phel is a functional programming language that transpiles to PHP",
+            "description": "Phel is a functional programming language that compiles to PHP",
             "homepage": "https://phel-lang.org/",
             "keywords": [
                 "functional",
@@ -1412,7 +1412,7 @@
             ],
             "support": {
                 "issues": "https://github.com/phel-lang/phel-lang/issues",
-                "source": "https://github.com/phel-lang/phel-lang/tree/v0.21.0"
+                "source": "https://github.com/phel-lang/phel-lang/tree/v0.29.0"
             },
             "funding": [
                 {
@@ -1420,32 +1420,32 @@
                     "type": "custom"
                 }
             ],
-            "time": "2025-09-01T05:33:28+00:00"
+            "time": "2026-02-01T13:18:54+00:00"
         },
         {
             "name": "phpunit/php-timer",
-            "version": "6.0.0",
+            "version": "8.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-timer.git",
-                "reference": "e2a2d67966e740530f4a3343fe2e030ffdc1161d"
+                "reference": "f258ce36aa457f3aa3339f9ed4c81fc66dc8c2cc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/e2a2d67966e740530f4a3343fe2e030ffdc1161d",
-                "reference": "e2a2d67966e740530f4a3343fe2e030ffdc1161d",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-timer/zipball/f258ce36aa457f3aa3339f9ed4c81fc66dc8c2cc",
+                "reference": "f258ce36aa457f3aa3339f9ed4c81fc66dc8c2cc",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.1"
+                "php": ">=8.3"
             },
             "require-dev": {
-                "phpunit/phpunit": "^10.0"
+                "phpunit/phpunit": "^12.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "6.0-dev"
+                    "dev-main": "8.0-dev"
                 }
             },
             "autoload": {
@@ -1471,7 +1471,8 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-timer/issues",
-                "source": "https://github.com/sebastianbergmann/php-timer/tree/6.0.0"
+                "security": "https://github.com/sebastianbergmann/php-timer/security/policy",
+                "source": "https://github.com/sebastianbergmann/php-timer/tree/8.0.0"
             },
             "funding": [
                 {
@@ -1479,7 +1480,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-02-03T06:57:52+00:00"
+            "time": "2025-02-07T04:59:38+00:00"
         },
         {
             "name": "psr/container",
