@@ -6,8 +6,8 @@ Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async
 
 ## TODO
 
-- [ ] Fix requiring namespaces / files (Phel issue https://github.com/phel-lang/phel-lang/issues/766)
-  - [x] `require` macro from repl-utils.phel works
+- [ ] Fix requiring namespaces / files - Phel issue https://github.com/phel-lang/phel-lang/issues/766
+  - [x] +`require` macro from repl-utils.phel works
   - [ ] Namespace switching with requires
 
 ## Supported nREPL OPS
