@@ -301,6 +301,7 @@
      (callable->closure  ;; makes Phel anonymous fn compatible with AMPHP
       (fn []
         (log-info (str "accepted connection from " address))
+        (php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))  ;; This seems to make ns loading work (??)
         (loop [send-fn (make-send-fn socket)]
           (when-let [chunk (php/rtrim (php/-> socket (read)))]
             (try
