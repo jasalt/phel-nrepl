@@ -11,33 +11,6 @@
                                 dir search-doc])
   )
 
-;;;; Debugging
-
-(defn get-global-env []
-  (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance)))
-
-(defn get-registry []
-  (php/:: \Phel\Lang\Registry (getInstance)))
-
-(defn get-backtrace-object
-  "Fetch object from backtrace by classname e.g. Phel\\Run\\RunFacade"
-  [classname]
-  (let [backtrace (php/debug_backtrace php/DEBUG_BACKTRACE_PROVIDE_OBJECT)
-        frames-with-object (filter |(contains-value? (keys $) "object") backtrace)
-        matching-frame (first (filter |(= (get $ "class") classname) frames-with-object))]
-        (get matching-frame "object")))
-
-(defn get-runfacade [] (get-backtrace-object "Phel\\Run\\RunFacade"))
-
-(defn get-instance-private-property [instance property]
-  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
-    (php/-> refprop (setAccessible true))
-    (php/-> refprop (getValue instance))))
-
-(defn set-instance-private-property [instance property value]
-  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
-    (php/-> refprop (setAccessible true))
-    (php/-> refprop (setValue instance value))))
 
 ;;;; Logging
 
@@ -287,13 +260,6 @@
            (php/:: \Phel\Shared\CompilerConstants PHEL_CORE_NAMESPACE)
            (php/:: \Phel\Shared\ReplConstants REPL_MODE)
            true))
-
-;; Configure source directories for BuildFacade
-;; (php/-> (php/:: \Phel\Lang\Registry (getInstance))
-;;           (addDefinition
-;;            "phel\\repl"  ; Note: this key, not PHEL_CORE_NAMESPACE
-;;            "src-dirs"
-;;            (phel->php ["src"]))) ; Add directories containing phel\html
 
 (loop []
   (when-let [socket (php/-> server (accept))]
