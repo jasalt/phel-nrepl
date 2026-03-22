@@ -7,8 +7,10 @@
                                     bencode-decode
                                     bencode-encode
                                     ])
-  (:require phel-nrepl\repl-utils :refer [resolve doc require use compile-str
-                                          require-namespace eval-namespace])
+  ;; (:require phel-nrepl\repl-utils :refer [resolve doc require use compile-str
+  ;;                                         require-namespace eval-namespace])
+  (:require phel\repl :refer [doc require resolve use print-colorful println-colorful
+                                dir search-doc])  ;apropos
   )
 
 ;;;; Debugging
