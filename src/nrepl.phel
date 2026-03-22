@@ -326,8 +326,14 @@
                server-address " - nrepl://" server-address ":" port "\n"))
 (log-info "TODO send startup message direct to stdout")
 
-;; TODO
-;; - handle multiple forms and not just one per eval
+;; Make ns form evaluating behave more like in stock REPL
+;; https://github.com/phel-lang/phel-lang/pull/820/changes#diff-3f51b3b4f984bfefc881f9c4944d20cc95dab902e3ad85ca8e68acd21e73d9e6
+(php/-> (php/:: \Phel\Lang\Registry (getInstance))
+          (addDefinition
+           (php/:: \Phel\Shared\CompilerConstants PHEL_CORE_NAMESPACE)
+           (php/:: \Phel\Shared\ReplConstants REPL_MODE)
+           true))
+;; TODO: It changes to the ns but does not make refers available yet
 
 (loop []
   (when-let [socket (php/-> server (accept))]
