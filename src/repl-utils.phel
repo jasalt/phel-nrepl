@@ -1,3 +1,5 @@
+;; DEPRECATED
+
 (ns phel-nrepl\repl-utils
   (:use Phel\Lang\Symbol)
   (:use Phel\Lang\Registry)
