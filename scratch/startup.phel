@@ -1,0 +1,10 @@
+;; Experimental entry point which didn't work
+
+(ns phel-nrepl\startup)
+
+;; this seems to be VERY required to allow evaluating ns form with refers to core library
+(php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces "src/nrepl.phel"))
+
+;; currently running this does not improve the situation, the
+;; (php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces "src/nrepl.phel"))
+;; needs to be run after the repl has launched

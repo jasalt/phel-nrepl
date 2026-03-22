@@ -1,0 +1,66 @@
+  ;; This is from ILT, used only for reference
+
+(defn handle-request []
+  (let [request (http/request-from-globals)
+        uri (get request :uri)]
+    (when (and (= (get request :method) "POST")
+               (= (get uri :path) "/ilt"))
+      (let [operation (json-decode-value (php/json_decode (php/file_get_contents "php://input") true))]
+        (case (get operation :method)
+          "evaluate"
+          (let [expr (first (get operation :params))]
+            (try
+              (let [res (eval (read-string expr))]
+                (jsonrpc-result operation
+                                {:type (type res)
+                                 :repr (print-str res)
+                                 :kind (ilt-kind-of (type res))}  ; useless?
+                                ))
+              (catch \Exception e
+                (jsonrpc-error operation (php/-> e (getMessage))))))
+
+          "compile"  ; TODO should be "macroexpand?"
+          (let [expr (first (get operation :params))]
+            (try
+              (let [res (compile (read-string expr))]
+                (jsonrpc-result operation res))
+              (catch \Exception e
+                (jsonrpc-error operation (php/-> e (getMessage))))))
+
+          "complete"
+          (let [what (first (get operation :params))]
+            (jsonrpc-result operation (complete what)))
+
+          "get_definition_properties"
+          (let [def (first (get operation :params))
+                props (second (get operation :params))]
+            (jsonrpc-result operation (definition-properties def props)))
+
+          "apropos"
+          (let [what (first (get operation :params))]
+            (jsonrpc-result operation (apropos what)))
+
+          "find_definitions"
+          (let [name (get (get operation :params) 0)
+                module (get (get operation :params) 1)
+                type (get (get operation :params) 2)]
+            (jsonrpc-result operation (find-definitions name type)))
+
+          true
+          (print "Error: invalid operation"))
+
+        ;; We handled the ILT jsonrpc request. Quit now.
+        (php/exit 0)
+        ))))
+
+;; (php/-> (php/new \ReflectionFunction "count") (getParameters))
+;; (php/-> (php/new \ReflectionFunction "count") (getDocComment))
+
+;; (php/-> (php/new \ReflectionFunction "array_merge") (getParameters))
+;; (php/-> (php/new \ReflectionFunction "array_merge") (getDocComment))
+;; (php/-> (php/new \ReflectionFunction "array_merge") (getName))
+;; (php/-> (php/new \ReflectionFunction "array_merge") (getNamespaceName))
+;; (php/-> (php/new \ReflectionFunction "array_merge") (getReturnType))
+;; (php/-> (php/new \ReflectionFunction "array_merge") (getFilename))
+
+;; (php/get_class_methods "Symfony\Component\String\AbstractString")
