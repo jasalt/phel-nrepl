@@ -1,0 +1,129 @@
+;; nREPL testing
+
+;; *ns*
+;; => phel_nrepl\nrepl
+
+;; (get-instance-private-property (get-global-env) "ns")
+;; => phel_nrepl\nrepl
+
+(ns phel-nrepl\diagnostics
+  (:require phel\html :refer [html]))
+;; => 1
+
+(type html)
+;; :function
+
+*ns*
+;; => phel_nrepl\nrepl  !!! Why not changing?
+
+(get-instance-private-property (get-global-env) "ns")
+;; Cannot resolve symbol 'get-instance-private-property'
+
+(defn get-global-env []
+  (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance)))
+
+(defn get-instance-private-property [instance property]
+  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
+    (php/-> refprop (setAccessible true))
+    (php/-> refprop (getValue instance))))
+
+(get-instance-private-property (get-global-env) "ns")
+;; => phel-nrepl\diagnostics
+
+(get (php->phel (get-instance-private-property (get-global-env) "refers")) "phel-nrepl\\diagnostics")
+;; {"raw-string" phel\html, "doc" phel\repl, "require" phel\repl, "use" phel\repl, "print-colorful" phel\repl, "println-colorful" phel\repl}
+
+(type raw-string)
+;; Cannot resolve symbol 'raw-string'.   !!!! Why fails to call eventhough "refers" includes it
+
+(defn get-registry []
+  (php/:: \Phel\Lang\Registry (getInstance)))
+
+(php->phel (php/-> (get-registry) (getNamespaces)))
+;; ["phel\\core" "phel\\str" "phel_nrepl\\util" "phel\\repl" "phel_nrepl\\nrepl" "phel_nrepl\\diagnostics"]
+
+(keys (php->phel (get-instance-private-property (get-registry) "definitions")))
+;; ["phel\\core" "phel\\str" "phel_nrepl\\util" "phel\\repl" "phel_nrepl\\nrepl"]
+
+;; ("phel_nrepl\\diagnostics" (php->phel (get-instance-private-property (get-registry) "definitions")))
+;; TODO Error: "Call to undefined function phel_nrepl\diagnostics()"
+
+(get (php->phel (get-instance-private-property (get-registry) "definitions")) "phel_nrepl\\diagnostics")
+;; {"get-global-env" <function>, "get-instance-private-property" <function>, "get-registry" <function>}
+
+(get
+ (php->phel (get-instance-private-property (get-registry) "definitionsMetaData"))
+ "phel_nrepl\\diagnostics")
+;; {"get-global-env" {:doc "```phel\n(get-global-env)\n```\n", :start-location {:file "string", :line 1, :column 0}, :end-location {:file "string", :line 2, :column 82}, "min-arity" 0, "is-variadic" false}, "get-instance-private-property" {:doc "```phel\n(get-instance-private-property instance property)\n```\n", :start-location {:file "string", :line 1, :column 0}, :end-location {:file "string", :line 4, :column 42}, "min-arity" 2, "is-variadic" false}, "get-registry" {:doc "```phel\n(get-registry)\n```\n", :start-location {:file "string", :line 1, :column 0}, :end-location {:file "string", :line 2, :column 45}, "min-arity" 0, "is-variadic" false}}
+
+(require phel\html)
+;; Cannot resolve symbol 'require'.
+
+
+;;;;; Try changing *ns* manually
+
+(php/-> (get-registry) (addDefinition "phel\\core" "*ns*" "phel-nrepl\\diagnostics"))
+
+*ns*
+;; phel-nrepl\diagnostics
+
+(type raw-string)
+;; => Cannot resolve symbol 'raw-string'  !!!! still not resolving
+
+(php/-> (get-registry) (getDefinition "phel\\core" "*ns*"))
+;; => phel-nrepl\diagnostics
+
+
+(php->phel (get-instance-private-property (get-global-env) "refers"))
+;; {"phel-nrepl\\nrepl" {"callable->closure" phel-nrepl\util, "partialr" phel-nrepl\util, "all-phel-def-names" phel-nrepl\util, "apropos" phel-nrepl\util, "bencode-decode" phel-nrepl\util, "bencode-encode" phel-nrepl\util, "doc" phel\repl, "require" phel\repl, "resolve" phel\repl, "use" phel\repl, "print-colorful" phel\repl, "println-colorful" phel\repl, "dir" phel\repl, "search-doc" phel\repl}, "phel-nrepl\\diagnostics" {"raw-string" phel\html, "doc" phel\repl, "require" phel\repl, "use" phel\repl, "print-colorful" phel\repl, "println-colorful" phel\repl}}
+
+(get-instance-private-property (get-global-env) "ns")
+;; phel-nrepl\diagnostics
+
+(php->phel (php/-> (get-registry) (getDefinitionInNamespace "phel\\html")))
+;; []
+
+
+;;;;; Start over
+
+(ns phel-nrepl\diagnostics
+  (:require phel\html :refer [html]))
+
+(get (php->phel (get-instance-private-property (get-global-env) "refers")) "phel-nrepl\\diagnostics")
+;; {"html" phel\html, "doc" phel\repl, "require" phel\repl, "use" phel\repl, "print-colorful" phel\repl, "println-colorful" phel\repl}
+
+(get-instance-private-property (get-global-env) "ns")
+;; phel-nrepl\diagnostics
+
+(php/-> (get-registry) (addDefinition "phel\\core" "*ns*" "phel-nrepl\\diagnostics"))
+*ns*
+;; phel-nrepl\diagnostics
+
+(php->phel (php/-> (get-registry) (getDefinitionInNamespace "phel\\html")))
+;; []
+
+(type html)
+;; Cannot resolve symbol 'html'.
+
+(php->phel (php/-> (get-registry) (getDefinitionInNamespace "phel\\core")))
+;; Shows core namespace definitions
+
+(php->phel (php/-> (get-registry) (getDefinitionInNamespace "phel\\repl")))
+;; {"compile-str" <function>, "get-global-env" <function>, "print-colorful-str" <function>, "doc" <function>, "set-ns" <function>, "require" <function>, "build-facade" Printer cannot print this type: Phel\Build\BuildFacade, "require-namespace" <function>, "use" <function>, "src-dirs" ["src"], "print-colorful" <function>, "find-doc" <function>, "use-namespace" <function>, "extract-alias" <function>, "println-colorful" <function>, "eval-namespace" <function>, "loaded-namespaces" <function>, "eval-file" <function>, "resolve" <function>, "clean-doc" <function>}
+
+
+;;;;;; Start over testing
+;; - mimick https://github.com/phel-lang/phel-lang/blob/fdf5b9a498837d1e8f941f5ee5e97af1b3afc762/src/php/Run/Infrastructure/Command/ReplCommand.php#L111
+;; - "hack" maybe related https://github.com/phel-lang/phel-lang/blob/fdf5b9a498837d1e8f941f5ee5e97af1b3afc762/src/php/Run/Application/NamespaceLoader.php#L71
+
+(php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))  ;; this seems to be VERY required to allow evaluating ns form with refers to core library
+
+(ns phel-nrepl\diagnostics
+  (:require phel\html :refer [html]))
+;; => 1
+
+(type html)
+;; :function
+
+(html [:span {:class "foo"} "bar"])
+;; <span class="foo">bar</span>
