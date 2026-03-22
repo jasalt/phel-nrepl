@@ -147,3 +147,19 @@
 
 (html [:span {:class "foo"} "bar"])
 ;; <span class="foo">bar</span>
+
+
+;;;;; Continue with (php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))
+;;;;; added to main loop
+
+(ns phel-nrepl\diagnostics
+  (:require phel\pprint :refer [pprint-str]))
+
+(type pprint-str)
+;; Cannot resolve symbol 'pprint-str'.   ! why this one not working still while phel\html works?
+
+(ns phel-nrepl\diagnostics2
+  (:require phel\html :refer [html]))
+
+(type html)
+;; :function
