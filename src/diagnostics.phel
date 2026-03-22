@@ -84,7 +84,7 @@
 ;; []
 
 
-;;;;; Start over
+;;;;; Start over (failing still)
 
 (ns phel-nrepl\diagnostics
   (:require phel\html :refer [html]))
@@ -112,15 +112,35 @@
 ;; {"compile-str" <function>, "get-global-env" <function>, "print-colorful-str" <function>, "doc" <function>, "set-ns" <function>, "require" <function>, "build-facade" Printer cannot print this type: Phel\Build\BuildFacade, "require-namespace" <function>, "use" <function>, "src-dirs" ["src"], "print-colorful" <function>, "find-doc" <function>, "use-namespace" <function>, "extract-alias" <function>, "println-colorful" <function>, "eval-namespace" <function>, "loaded-namespaces" <function>, "eval-file" <function>, "resolve" <function>, "clean-doc" <function>}
 
 
-;;;;;; Start over testing
+;;;;; Start over (somewhat working ns evaluation)
+
 ;; - mimick https://github.com/phel-lang/phel-lang/blob/fdf5b9a498837d1e8f941f5ee5e97af1b3afc762/src/php/Run/Infrastructure/Command/ReplCommand.php#L111
 ;; - "hack" maybe related https://github.com/phel-lang/phel-lang/blob/fdf5b9a498837d1e8f941f5ee5e97af1b3afc762/src/php/Run/Application/NamespaceLoader.php#L71
 
-(php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))  ;; this seems to be VERY required to allow evaluating ns form with refers to core library
+*ns*
+;; phel_nrepl\nrepl
+(php/-> (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance))
+        (getNs))
+;; phel_nrepl\nrepl
+
+;; This seems to be required to allow evaluating ns form with refers to core library
+(php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))
+
+*ns*
+;; phel_nrepl\nrepl
+(php/-> (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance))
+        (getNs))
+;; user
 
 (ns phel-nrepl\diagnostics
   (:require phel\html :refer [html]))
 ;; => 1
+
+*ns*
+;; phel_nrepl\nrepl
+(php/-> (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance))
+        (getNs))
+;; phel-nrepl\diagnostics
 
 (type html)
 ;; :function
