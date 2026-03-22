@@ -26,8 +26,9 @@
 (defn get-runfacade [] (get-backtrace-object "Phel\\Run\\RunFacade"))
 
 
+;; NOTE: this is modified
 (def- src-dirs (to-php-array
-                (apply (partial vector "/home/user/dev/phel-nrepl/src")  ; TODO is first item here needed?
+                (apply (partial vector "/home/user/dev/phel/phel-nrepl/src")  ; TODO is first item here needed?
                        (php/-> (get-runfacade) (getAllPhelDirectories))))) ; Will be set by the repl command
 
 (defn- get-global-env []
@@ -35,6 +36,9 @@
 
 (defn- loaded-namespaces []
   (php/-> (php/:: Registry (getInstance)) (getNamespaces)))
+
+(defn namespace-definitions [ns]
+  (php/-> (php/:: Registry (getInstance)) (getDefinitionInNamespace ns)))
 
 (defn- eval-file [file]
   (php/-> build-facade (evalFile file)))
@@ -94,6 +98,9 @@
     (set-ns current-ns)
     namespace))
 
+
+;; Modified phel-nrepl\repl-utils (broken after update):
+;; [2026-03-21T12:15:05.301609+00:00] server.error: UNKNOWN HANDLING ERROR: InvalidArgumentException: Cannot pop in /tmp/phel/cache/compiled/phel_core.php:4364 Stack trace: #0 /tmp/phel/cache/compiled/phel-nrepl_repl-utils.php(488): Phel\Lang\AbstractFn@anonymous->__invoke() #1 /tmp/phel/cache/compiled/phel-nrepl_repl-utils.php(617): Phel\Lang\AbstractFn@anonymous->__invoke()
 (defmacro require
   "Requires a Phel module into the environment."
   [sym & args]
