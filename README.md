@@ -5,10 +5,12 @@
 Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async [amphp/socket](https://amphp.org/socket) server (using PHP 8.1+ Fibers).
 
 ## TODO
+- [ ] eval `ns` forms
+- [ ] `require`
+- [ ] handle multiple forms and not just one per eval
 
-- [ ] Fix requiring namespaces / files - Phel issue https://github.com/phel-lang/phel-lang/issues/766
-  - [x] +`require` macro from repl-utils.phel works
-  - [ ] Namespace switching with requires
+
+NOTE: `require` and evaluating `ns` forms is more broken after updating to phel 0.29.0 so need to look at it. Previous diagnostics on old Phel issue https://github.com/phel-lang/phel-lang/issues/766
 
 ## Supported nREPL OPS
 - [x] describe
