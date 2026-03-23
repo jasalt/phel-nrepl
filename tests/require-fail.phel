@@ -1,0 +1,40 @@
+(ns require-fail)
+
+;; Eval from below here (not the above ns form)
+
+(php/-> (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance))
+        (getNs))
+;; => user
+*ns*
+;; => user
+
+; NOTE: cider evals file ns if connected when sourcecode buffer has focus in emacs
+
+
+(defn get-instance-private-property [instance property]
+  (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
+    (php/-> refprop (setAccessible true))
+    (php/-> refprop (getValue instance))))
+
+(defn get-ns-prop [ns prop]
+  (get (php->phel
+        (get-instance-private-property
+         (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton (getInstance))
+         prop)) ns))
+
+;; user definitions
+(get-ns-prop "user" "definitions")
+;; => {\"get-instance-private-property\" true, \"get-user-refers\" true, \"get-user-definitions\" true, \"get-ns-prop\" true}
+
+;; refers
+(get-ns-prop "user" "refers")
+;; => ""
+
+(require phel\json :refer [encode-value])
+;; => phel\json
+
+(type encode-value)
+;; :function
+
+(type require)
+;; Cannot resolve symbol 'require'.   ! seems to fail after first use?

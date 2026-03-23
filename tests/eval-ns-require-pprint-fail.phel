@@ -1,0 +1,11 @@
+(ns eval-ns-require-pprint-fail)
+
+;; Evaluating
+
+(ns phel-nrepl\diagnostics2
+  (:require phel\pprint :refer [pprint-str]))
+
+(type pprint-str)
+;; Cannot resolve symbol 'pprint-str'.   ! why this one not working still while phel\html works?
+;; There's something odd with phel\pprint possibly related to how it requires phel\core?
+;; https://github.com/phel-lang/phel-lang/blob/6ceef3b5de5080ee768600b2445f7ea1de352c85/src/phel/pprint.phel#L2

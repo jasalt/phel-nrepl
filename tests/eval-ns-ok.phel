@@ -1,0 +1,9 @@
+(ns eval-ns-ok)
+
+;; eval from below
+
+(ns phel-nrepl\diagnostics
+  (:require phel\html :refer [html]))
+
+(type html)
+;; :function   -> seems to resolve correctly!
