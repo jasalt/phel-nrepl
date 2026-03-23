@@ -1,6 +1,8 @@
 (ns phel-nrepl\util
-  (:require phel\str :as str) ; TODO check require working here?
-  )
+  (:require phel\str :as str))
+
+;; Utility functions
+;; TODO separate what is used by nrepl.phel and what for diagnosing it's behavior
 
 (defn dd
   "Dump and die."
@@ -295,6 +297,7 @@
 
 (defn get-runfacade [] (get-backtrace-object "Phel\\Run\\RunFacade"))
 
+;; TODO duplicated functionality in read-php-obj-prop
 (defn get-instance-private-property [instance property]
   (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
     (php/-> refprop (setAccessible true))
