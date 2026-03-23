@@ -1,4 +1,7 @@
-  ;; This is from ILT, used only for reference
+;; This is from ILT, used only for reference
+
+(ns scratch-ilt
+  (require phel\http))
 
 (defn handle-request []
   (let [request (http/request-from-globals)
