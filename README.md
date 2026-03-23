@@ -1,11 +1,10 @@
 # Phel-nrepl (WIP)
 
-`Status: very rough, with some initial wiring done, may work somewhat with a single namespace`
+`Status: much of initial wiring done, namespace switching / requires are work in progress`
 
 Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async [amphp/socket](https://amphp.org/socket) server (using PHP 8.1+ Fibers).
 
 ## TODO
-- [ ] diagnose why fails with unused `Cannot resolve symbol 'http/request-from-globals'` out of the blue
 - [ ] eval `ns` forms (works partially)
 - [ ] `require`
 - [ ] handle multiple forms and not just one per eval
@@ -55,11 +54,13 @@ d6:statusl4:donee5:valuei2ee
 Connection with Emacs Cider and Calva work mostly.
 
 ### Cider
-Logging: (setq nrepl-log-messages t)
+Use `M-x` `cider-connect` and connect to localhost port 8888.
+
+For logging use `(setq nrepl-log-messages t)`.
 
 Developed using clojure-mode with small tweaks https://codeberg.org/jasalt/.emacs.d/src/branch/main/personal/phel.el.
 
-Cider does not recognize `\` as character to include in beginning of completion prefix due to `thingatpt.el` which needs custom setting such as:
+Cider does not recognize `\` as character (part of PHP namespace/class syntax) to include in beginning of completion prefix due to `thingatpt.el` which needs custom setting such as:
 
 ```
 (defun phel-bounds-of-symbol-at-point ()
