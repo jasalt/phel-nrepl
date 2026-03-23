@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ddd071a82c2be933638a6299cd2784f6",
+    "content-hash": "40dba01a98b156715e8ec53ee2d4d161",
     "packages": [
         {
             "name": "amphp/amp",
@@ -1345,16 +1345,16 @@
         },
         {
             "name": "phel-lang/phel-lang",
-            "version": "v0.29.0",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phel-lang/phel-lang.git",
-                "reference": "06ebd8102dcce28b435cd900015390d478775975"
+                "reference": "6ceef3b5de5080ee768600b2445f7ea1de352c85"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/06ebd8102dcce28b435cd900015390d478775975",
-                "reference": "06ebd8102dcce28b435cd900015390d478775975",
+                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/6ceef3b5de5080ee768600b2445f7ea1de352c85",
+                "reference": "6ceef3b5de5080ee768600b2445f7ea1de352c85",
                 "shasum": ""
             },
             "require": {
@@ -1375,6 +1375,7 @@
                 "symfony/var-dumper": "^7.4",
                 "vimeo/psalm": "^6.14"
             },
+            "default-branch": true,
             "bin": [
                 "bin/phel"
             ],
@@ -1412,7 +1413,7 @@
             ],
             "support": {
                 "issues": "https://github.com/phel-lang/phel-lang/issues",
-                "source": "https://github.com/phel-lang/phel-lang/tree/v0.29.0"
+                "source": "https://github.com/phel-lang/phel-lang/tree/main"
             },
             "funding": [
                 {
@@ -1420,7 +1421,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2026-02-01T13:18:54+00:00"
+            "time": "2026-03-23T00:33:10+00:00"
         },
         {
             "name": "phpunit/php-timer",
@@ -2498,7 +2499,9 @@
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "phel-lang/phel-lang": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {},
