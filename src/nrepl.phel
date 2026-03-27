@@ -161,14 +161,27 @@
   )
 
 
+(defn cleanup-code-string
+  "Remove comments (everything after ; on each line) from code input"
+  [code-input]
+  (let [lines (str/split-lines code-input)
+        stripped-lines (map (fn [line]
+                              (-> line
+                                  (str/replace-first "/;.*/" "")
+                                  (str/trim)))
+                            lines)]
+    (str/join "\n" stripped-lines)))
+
+
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
-        _ (log-debug code-input)]
+        cleaned-code-input (cleanup-code-string code-input)
+        _ (log-debug cleaned-code-input)]
     (php/amp\async
      (callable->closure
       (fn []
         (try
-          (let [forms (read-all-forms code-input)
+          (let [forms (read-all-forms cleaned-code-input)
                 eval-results (vec (map eval forms))
                 last-result (if (empty? eval-results)
                               nil
