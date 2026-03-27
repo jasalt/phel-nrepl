@@ -131,16 +131,52 @@
 
 ;; d2:op8:describee
 
-;; TODO parse all as in https://github.com/phel-lang/phel-lang/blob/acf3222dd6a1c30f277625018d0304c80d6db578/src/php/Compiler/CompilerFacade.php#L143
-;; NOTE Reads ONLY the first Phel expression from the string
+(defn read-all-forms
+  "Read all forms from a string until EOF. Returns a vector of forms."
+  [code-input]
+  (let [cf (php/new \Phel\Compiler\CompilerFacade)
+        token-stream (php/-> cf (lexString code-input))]
+    (loop [forms []]
+      (let [node (try
+                   (php/-> cf (parseNext token-stream))
+                   (catch \Exception e
+                     (log-error (str "read-all-forms error: " e))
+                     nil))]
+        (if (nil? node)
+          forms
+          (let [form (php/-> (php/-> cf (read node)) (getAst))]
+            (recur (conj forms form))))))))
+
+(comment  ; TODO tests
+  (read-all-forms "(+ 1 1)(+ 5 5)")
+  ;; [(+ 1 1) (+ 5 5)]
+  (type (second (read-all-forms "(+ 1 1)(+ 5 5)")))
+  ;; :list
+  (map eval (read-all-forms "(+ 1 1)(+ 5 5)"))
+  ;; @[2 10]
+  (type (map eval (read-all-forms "(+ 1 1)(+ 5 5)")))
+  ;; :php/object
+  (type (second (map eval (read-all-forms "(+ 1 1)(+ 5 5)"))))
+  ;; :int
+  )
+
+
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
         _ (log-debug code-input)]
     (php/amp\async
      (callable->closure
       (fn []
-        (let [eval-res (eval (read-string code-input))]
-          (send-fn request {:value (str eval-res) :status ["done"]})))))))
+        (try
+          (let [forms (read-all-forms code-input)
+                eval-results (vec (map eval forms))
+                last-result (if (empty? eval-results)
+                              nil
+                              (last eval-results))]
+            (send-fn request {:value (str last-result) :status ["done"]}))
+          (catch \Exception e
+            (log-error (str "eval error: " e))
+            (send-fn request {:value (str "ERROR: " e) :status ["done"]}))))))))
 
 ;; d4:code7:(+ 1 1)2:op4:evale
 

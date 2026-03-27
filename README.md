@@ -7,7 +7,7 @@ Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async
 ## TODO
 - [x] eval `ns` forms (works partially)
 - [x] `require`
-- [ ] handle multiple forms and not just one per eval
+- [x] handle multiple forms and not just one per eval
 - [ ] die gracefully on disconnect
 - [ ] make work with [`clj-nrepl-eval`](https://github.com/bhauman/clojure-mcp-light/tree/main?tab=readme-ov-file#clj-nrepl-eval-llm-nrepl-connection-without-an-mcp)
 
