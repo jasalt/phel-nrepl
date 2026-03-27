@@ -1,17 +1,15 @@
 ;; From https://github.com/jasalt/phel-amphp-examples/blob/main/src/socket/simple-http-server.phel
 
-;;; Running HTTP server over nREPL
+;;; Initiating HTTP server to another port and modifying it's logic
+;;; on the fly
 
-(ns phel-nrepl\examples\socket-http-server)
+(ns phel-nrepl\examples\socket-http-server
+  (:require phel-nrepl\util :refer [callable->closure]))
+
+(type callable->closure)
+;; => :function
 
 (def server (php/amp\socket\listen "127.0.0.1:8000"))
-;; => 1
-
-(defn callable->closure
-  "Converts callable such as Phel\Lang\AbstractFn into a closure that is often
-  expected by AMPHP"
-  [phel-fn]
-  (php/:: \Closure (fromCallable phel-fn)))
 ;; => 1
 
 (def greeting "Hey, ")
