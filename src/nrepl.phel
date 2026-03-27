@@ -131,16 +131,16 @@
 
 ;; d2:op8:describee
 
+;; TODO parse all as in https://github.com/phel-lang/phel-lang/blob/acf3222dd6a1c30f277625018d0304c80d6db578/src/php/Compiler/CompilerFacade.php#L143
+;; NOTE Reads ONLY the first Phel expression from the string
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
-        _ (log-debug code-input)
-        eval-res (eval (read-string (get request :code)))  ; Reads the first phel expression from the string
-        ;; TODO parse all https://github.com/phel-lang/phel-lang/blob/acf3222dd6a1c30f277625018d0304c80d6db578/src/php/Compiler/CompilerFacade.php#L143
-        eval-res-str (str eval-res)
-        resp {:value eval-res-str :status ["done"]}]
-    (send-fn request resp)
-    )
-  )
+        _ (log-debug code-input)]
+    (php/amp\async
+     (callable->closure
+      (fn []
+        (let [eval-res (eval (read-string code-input))]
+          (send-fn request {:value (str eval-res) :status ["done"]})))))))
 
 ;; d4:code7:(+ 1 1)2:op4:evale
 

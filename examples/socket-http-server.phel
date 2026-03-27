@@ -36,7 +36,4 @@
 ;;; The server gives 200 response at http://localhost:8000/
 
 (+ 1 1)
-;; no response
-
-
-;;; TODO The server seems to block the nREPL server
+;; => 2
