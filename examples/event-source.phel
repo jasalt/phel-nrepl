@@ -1,0 +1,77 @@
+;; Adapted from https://github.com/jasalt/phel-amphp-examples/blob/main/src/http-server/event-source.phel
+(ns phel-nrepl\examples\event-source
+  (:require phel\html :refer [html doctype raw-string])
+  (:require phel-nrepl\util :refer [callable->closure]))
+;; => 1
+
+(def event-source-js
+  (str
+   "const eventSource = new EventSource('/events');"
+   "const eventList = document.createElement('ol');"
+   "document.body.appendChild(eventList);"
+   "eventSource.addEventListener('notification', function (e) {"
+   "    const element = document.createElement('li');"
+   "    element.textContent = 'Message: ' + e.data;"
+   "    eventList.appendChild(element);"
+   "});"))
+;; => 1
+
+(defn index-html []
+  (html
+   (doctype :html5)
+   [:head
+    [:title "Event Source Demo (Phel & Amphp)"]]
+   [:body
+    [:h1 "Event Source demo with Phel & Amphp"]
+    [:p "Events should start appearing below after page load"]
+    [:script
+     (raw-string event-source-js)]]))
+;; => 1
+
+(def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
+;; => 1
+
+(doto log-handler
+  (php/-> (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
+  (php/-> (setFormatter (php/new \Amp\Log\ConsoleFormatter))))
+;; Unhandled future: Error: "Object of class Amp\Log\StreamHandler could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin. // file: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php
+
+(def logger (php/new \Monolog\Logger "server"))
+(php/-> logger (pushHandler log-handler))
+
+(def server (php/:: \Amp\Http\Server\SocketHttpServer (createForDirectAccess logger)))
+
+(doto server
+  (php/-> (expose (php/new \Amp\Socket\InternetAddress "0.0.0.0" 1337)))
+  (php/-> (expose (php/new \Amp\Socket\InternetAddress "[::]" 1337))))
+
+(defn handler-fn [request]
+  ;; (php/dd request)
+  (let [path (php/-> (php/-> request (getUri)) (getPath))]
+    (case path
+      "/" (php/new \Amp\Http\Server\Response
+                   (php/:: \Amp\Http\HttpStatus OK)
+                   (php-associative-array "content-type" "text/html; charset=utf-8")
+                   (index-html))
+
+      "/events" (php/new \Amp\Http\Server\Response
+                         (php/:: \Amp\Http\HttpStatus OK)
+                         (php-associative-array "content-type" "text/event-stream; charset=utf-8")
+                         (php/new \Amp\ByteStream\ReadableIterableStream
+                                  (dofor [i :range [0 30]]
+                                         (php/amp\delay 0.5)
+                                         (php/yield (str "event: notification\ndata: Event " i "\n\n")))))
+      ;; else
+      (php/new \Amp\Http\Server\Response
+               (php/:: \Amp\Http\HttpStatus OK)
+               (php-associative-array "content-type" "text/html")
+               "404"))))
+
+(php/-> server (start (php/new \Amp\Http\Server\RequestHandler\ClosureRequestHandler
+                               (callable->closure handler-fn))
+                      (php/new \Amp\Http\Server\DefaultErrorHandler)))
+
+(def signal (php/amp\trapsignal (php-indexed-array php/SIGINT php/SIGTERM)))
+
+(php/-> logger (info (str "Caught signal " signal " stopping server")))
+(php/-> server (stop))
