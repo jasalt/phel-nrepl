@@ -1,0 +1,4 @@
+(ns phel-nrepl\examples\eval-multiple-forms)
+
+(def x 5)(def x (+ x 10))(+ x 100)
+;; => 115
