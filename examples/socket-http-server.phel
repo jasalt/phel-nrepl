@@ -1,0 +1,42 @@
+;; From https://github.com/jasalt/phel-amphp-examples/blob/main/src/socket/simple-http-server.phel
+
+;;; Running HTTP server over nREPL
+
+(ns phel-nrepl\examples\socket-http-server)
+
+(def server (php/amp\socket\listen "127.0.0.1:8000"))
+;; => 1
+
+(defn callable->closure
+  "Converts callable such as Phel\Lang\AbstractFn into a closure that is often
+  expected by AMPHP"
+  [phel-fn]
+  (php/:: \Closure (fromCallable phel-fn)))
+;; => 1
+
+(loop []
+  (let [socket (php/-> server (accept))]
+    (when socket
+      (php/amp\async
+       (callable->closure
+        (fn []
+          (let [address (php/-> socket (getRemoteAddress))
+                ip      (php/-> address (getAddress))  ; ->getHost(); ; not found, docs have issue?
+                port    (php/-> address (getPort))
+                body    (str "Hey, your IP is " ip " and your local port used is " port ".")
+                body-length (php/strlen body)
+                resp    (str "HTTP/1.1 200 OK\r\nConnection: close\r\nContent-Length: "
+                             body-length "\r\n\r\n" body)]
+            (println "accepted connection from" address)
+            (php/-> socket (write resp))
+            (php/-> socket (end))))))
+      (recur))))
+;; no response
+
+;;; The server gives 200 response at http://localhost:8000/
+
+(+ 1 1)
+;; no response
+
+
+;;; TODO The server seems to block the nREPL server
