@@ -1349,12 +1349,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phel-lang/phel-lang.git",
-                "reference": "a467ce15a7bfe5baf21e8dea8b1667d5c5e39270"
+                "reference": "69ce4823ef9b0283f69ef0b6cc0ca3f0dd737d3a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/a467ce15a7bfe5baf21e8dea8b1667d5c5e39270",
-                "reference": "a467ce15a7bfe5baf21e8dea8b1667d5c5e39270",
+                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/69ce4823ef9b0283f69ef0b6cc0ca3f0dd737d3a",
+                "reference": "69ce4823ef9b0283f69ef0b6cc0ca3f0dd737d3a",
                 "shasum": ""
             },
             "require": {
@@ -1421,7 +1421,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2026-03-27T12:19:38+00:00"
+            "time": "2026-03-28T00:38:37+00:00"
         },
         {
             "name": "phpunit/php-timer",
