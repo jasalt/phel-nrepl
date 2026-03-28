@@ -219,12 +219,13 @@
 ;; (bencode-encode {:op "complete" :prefix "prin"})
 ;; d2:op8:complete6:prefix4:prine
 
-(defn handle-apropos [request send-fn]  ; WIP
+(defn handle-apropos [request send-fn]  ; TODO use phel\repl apropos
   (let [matching-defs (apropos (get request :prefix))
         resp {:completions matching-defs :status ["done"]}]
     (send-fn request resp)))
 
-(defn handle-macroexpand
+
+(defn handle-macroexpand  ; TODO use https://github.com/phel-lang/phel-lang/pull/1138
   "fake macroexpand, compiling expr to PHP"
   [request send-fn]
   (let [result (compile (read-string (get request :code)))

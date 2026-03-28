@@ -8,6 +8,7 @@ Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async
 - [x] eval `ns` forms (works partially)
 - [x] `require`
 - [x] handle multiple forms and not just one per eval
+- [ ] use new Phel Core functions for handlers
 - [ ] die gracefully on disconnect
 - [ ] make work with [`clj-nrepl-eval`](https://github.com/bhauman/clojure-mcp-light/tree/main?tab=readme-ov-file#clj-nrepl-eval-llm-nrepl-connection-without-an-mcp)
 
@@ -16,13 +17,13 @@ NOTE: `require` and evaluating `ns` forms is more broken after updating to phel 
 ## Supported nREPL OPS
 - [x] describe
 - [x] clone
-- [ ] eval
+- [x] eval
   - [x] single form
-  - [ ] multiple forms
+  - [x] multiple forms
 - Completions
   - Phel
     - [x] function names
-	- [ ] namespaces (?)
+	- [x] namespaces (?)
   - PHP
     - [x] global function names
     - [x] class names
