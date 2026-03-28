@@ -11,9 +11,10 @@
     }
   ],
   "require": {
-    "phel-lang/phel-lang": "dev-main",
+    "amphp/file": "^3.2",
     "amphp/log": "^2.0",
     "amphp/socket": "^2.3",
+    "phel-lang/phel-lang": "dev-main",
     "rhilip/bencode": "1.2.0"
   },
   "config": {
