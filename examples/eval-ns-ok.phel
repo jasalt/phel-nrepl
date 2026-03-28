@@ -1,9 +1,21 @@
-(ns eval-ns-ok)
+(ns phel-nrepl\examples\eval-ns-ok)
 
 ;; eval from below
 
+*ns*
+;; phel-nrepl\nrepl
+
 (ns phel-nrepl\diagnostics
   (:require phel\html :refer [html]))
+;; ""
+;; TODO above returns nil in stock REPL, look into keeping the type information during transport to see nil here
+
+
+*ns*
+;; phel-nrepl\diagnostics
 
 (type html)
 ;; :function   -> seems to resolve correctly!
+
+(type require)
+;; :function

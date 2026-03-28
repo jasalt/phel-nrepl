@@ -332,7 +332,6 @@
      (callable->closure  ;; makes Phel anonymous fn compatible with AMPHP
       (fn []
         (log-info (str "accepted connection from " address))
-        (php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))  ;; This seems to make ns form evaluation work with requires. Unsure if there's unwanted side-effects when running it here. It works also when evaluated via the nRepl connection before evaluating ns forms with requires.
         (loop [send-fn (make-send-fn socket)]
           (when-let [chunk (php/rtrim (php/-> socket (read)))]
             (try
