@@ -129,77 +129,14 @@
 
 ;; d2:op8:describee
 
-(defn read-all-forms
-  "Read all forms from a string until EOF. Returns a vector of forms."
-  [code-input]
-  (let [cf (php/new \Phel\Compiler\CompilerFacade)
-        token-stream (php/-> cf (lexString code-input))]
-    (loop [forms []]
-      (let [node (try
-                   (php/-> cf (parseNext token-stream))
-                   (catch \Exception e
-                     (log-error (str "read-all-forms error: " e))
-                     nil))]
-        (if (nil? node)
-          forms
-          (let [form (php/-> (php/-> cf (read node)) (getAst))]
-            (recur (conj forms form))))))))
-
-(comment  ; TODO tests
-  (read-all-forms "(+ 1 1)(+ 5 5)")
-  ;; [(+ 1 1) (+ 5 5)]
-  (type (second (read-all-forms "(+ 1 1)(+ 5 5)")))
-  ;; :list
-  (map eval (read-all-forms "(+ 1 1)(+ 5 5)"))
-  ;; @[2 10]
-  (type (map eval (read-all-forms "(+ 1 1)(+ 5 5)")))
-  ;; :php/object
-  (type (second (map eval (read-all-forms "(+ 1 1)(+ 5 5)"))))
-  ;; :int
-  )
-
-
-(defn cleanup-code-string
-  "Remove comments (everything after ; on each line) from code input"
-  [code-input]
-  (let [lines (str/split-lines code-input)
-        stripped-lines (map (fn [line]
-                              (-> line
-                                  (str/replace-first "/;.*/" "")
-                                  (str/trim)))
-                            lines)
-        stripped-nonempty-lines (filter |(not (str/blank? $)) stripped-lines)]
-    (str/join "\n" stripped-lines)))
-
-(comment
-  (cleanup-code-string
-   "(+ 1 1) ; comment
-
-(+ 5 10)")
-
-
-  (def x (cleanup-code-string
-   "(+ 1 1) ; comment
-
-(+ 5 10)"))
-  (str/blank? (first (str/split-lines x)))
-  ;; ""  ??? (-> was related to https://github.com/phel-lang/phel-lang/issues/1122)
-  )
-
-
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
-        cleaned-code-input (cleanup-code-string code-input)
-        _ (log-debug cleaned-code-input)]
+        _ (log-debug code-input)]
     (php/amp\async
      (callable->closure
       (fn []
         (try
-          (let [forms (read-all-forms cleaned-code-input)
-                eval-results (vec (map eval forms))
-                last-result (if (empty? eval-results)
-                              nil
-                              (last eval-results))]
+          (let [last-result (repl/eval-str code-input)]
             (send-fn request {:value (str last-result) :status ["done"]}))
           (catch \Exception e
             (log-error (str "eval error: " e))
@@ -259,16 +196,16 @@
 (def ops
   "A map of operations supported by the nREPL server (as keywords) to function
   handlers for those operations."
-  {:eval        handle-eval      ; WIP
+  {:eval        handle-eval
    :clone       handle-clone     ; TODO
-   :complete    handle-complete  ; DONE
-   :describe    handle-describe  ; DONE
-   :macroexpand handle-macroexpand
+   :complete    handle-complete  ; TODO update
+   :describe    handle-describe  ; TODO update
+   :macroexpand handle-macroexpand ; TODO
 
    :lookup      handle-lookup
    :info        handle-lookup     ; cider-nrepl middleware
 
-   ;; :apropos   handle-apropos ; WIP
+   ;; :apropos   handle-apropos  ; TODO
    ;; :eldoc     handle-lookup     ; cider-nrepl middleware
    ;; :close     handle-close
    ;; :load-file handle-load-file

@@ -2,3 +2,12 @@
 
 (def x 5)(def x (+ x 10))(+ x 100)
 ;; => 115
+
+
+;; NOTE testing whitespace and comment between forms
+
+;; Eval next 3 lines including space between them
+(+ 1 1) ; comment
+
+(+ 5 10)
+;; 15
