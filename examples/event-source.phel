@@ -4,6 +4,30 @@
   (:require phel-nrepl\util :refer [callable->closure]))
 ;; => 1
 
+(def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
+;; => 1
+
+(php/-> log-handler (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
+;; Unhandled future: Error: "Object of class Amp\Log\StreamHandler could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin. // file: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php
+
+;; TODO diagnose another Monolog instance failing when running in another fiber
+
+(php/-> (setFormatter (php/new \Amp\Log\ConsoleFormatter)))
+
+;; (doto log-handler
+;;   (php/-> (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
+;;   (php/-> (setFormatter (php/new \Amp\Log\ConsoleFormatter))))
+
+
+(def logger (php/new \Monolog\Logger "server"))
+(php/-> logger (pushHandler log-handler))
+
+(def server (php/:: \Amp\Http\Server\SocketHttpServer (createForDirectAccess logger)))
+
+(doto server
+  (php/-> (expose (php/new \Amp\Socket\InternetAddress "0.0.0.0" 1337)))
+  (php/-> (expose (php/new \Amp\Socket\InternetAddress "[::]" 1337))))
+
 (def event-source-js
   (str
    "const eventSource = new EventSource('/events');"
@@ -27,23 +51,6 @@
     [:script
      (raw-string event-source-js)]]))
 ;; => 1
-
-(def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
-;; => 1
-
-(doto log-handler
-  (php/-> (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
-  (php/-> (setFormatter (php/new \Amp\Log\ConsoleFormatter))))
-;; Unhandled future: Error: "Object of class Amp\Log\StreamHandler could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin. // file: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php
-
-(def logger (php/new \Monolog\Logger "server"))
-(php/-> logger (pushHandler log-handler))
-
-(def server (php/:: \Amp\Http\Server\SocketHttpServer (createForDirectAccess logger)))
-
-(doto server
-  (php/-> (expose (php/new \Amp\Socket\InternetAddress "0.0.0.0" 1337)))
-  (php/-> (expose (php/new \Amp\Socket\InternetAddress "[::]" 1337))))
 
 (defn handler-fn [request]
   ;; (php/dd request)
