@@ -3,6 +3,7 @@
 
 ;; Utility functions
 ;; TODO separate what is used by nrepl.phel and what for diagnosing it's behavior
+;; TODO cleanup deprecated code
 
 (defn dd
   "Dump and die."
@@ -91,7 +92,7 @@
   (let [registry (php/:: \Phel\Lang\Registry (getInstance))]
     (php/-> registry (getDefinitionMetaData "phel\core" name))))
 
-(defn make-definition [name type kind]
+(defn make-definition [name type kind]  ;; Probably should be trashed
   (let [def {:id name
              :name name
              :module "TODO"
@@ -146,7 +147,7 @@
 ;; https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#apropos
 ;; https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L176
 
-(defn- apropos [what]
+(defn- apropos [what]  ; TODO replace with phel\repl fn
   (let [phel-defs (all-phel-def-names)
         matching-phel-defs (filter (partialr php/str_contains what) phel-defs)
         php-defs (php/get_defined_functions)
@@ -240,7 +241,7 @@
       (php/aset arr (phel->php k) (phel->php v)))
     arr))
 
-(defn phel->php
+(defn phel->php  ; rm
   "Convert a Phel data type to a 'bencode compatible' value."
   [x]
   (cond
@@ -250,7 +251,7 @@
     (float? x) (str x)     ;      see Clojure for reference
     true x))
 
-(defn php->phel
+(defn php->phel  ; rm
   "Convert a php data structure to a 'phel compatible' value."
   [x]
   (cond
@@ -303,6 +304,7 @@
     (php/-> refprop (setAccessible true))
     (php/-> refprop (getValue instance))))
 
+;; TODO deprecated by phel\repl ns-publics ns-refers ns-aliases
 (defn set-instance-private-property [instance property value]
   (let [refprop (php/new \ReflectionProperty (php/:: instance class) property)]
     (php/-> refprop (setAccessible true))
