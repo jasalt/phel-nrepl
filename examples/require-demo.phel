@@ -9,9 +9,9 @@
 
 (php/-> (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton
                 (getInstance)) (getNs))
-;; phel-nrepl\examples\require-ok
+;; phel-nrepl\examples\require-demo
 *ns*
-;; phel-nrepl\examples\require-ok
+;; phel-nrepl\examples\require-demo
 
 (repl/ns-publics *ns*)
 ;; {}
@@ -48,8 +48,8 @@
 
 
 ;;; Seems that definitions when using require are not getting loaded
-;;; after https://github.com/phel-lang/phel-lang/pull/1120 while it
-;;; makes ns form evaluation work with requires
+;;; after https://github.com/jasalt/phel-nrepl/commit/8a2801e2a00a7940df0162a0202522313cb388ee
+;;; while it makes ns form evaluation work with requires
 
 
 ;;;; 3) Attempting earlier method forcefully loading namespaces to REPL:
@@ -66,5 +66,5 @@
 (repl/ns-publics "phel\json")
 ;; {"valid-key?" <function:valid-key?>, "encode-value" <function:encode-value>, "encode" <function:encode>, "decode-value" <function:decode-value>, "decode" <function:decode>}
 
-(type encode-value)
-;; :function   ; Working again
+(type json/encode-value)
+;; :function   ; Working again, as it did yesterday

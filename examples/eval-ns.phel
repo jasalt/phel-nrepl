@@ -1,9 +1,7 @@
-(ns phel-nrepl\examples\eval-ns-ok)
-
-;; eval from below
+(ns phel-nrepl\examples\eval-ns)
 
 *ns*
-;; phel-nrepl\nrepl
+;; eval-ns-ok
 
 (ns phel-nrepl\diagnostics
   (:require phel\html :refer [html]))
