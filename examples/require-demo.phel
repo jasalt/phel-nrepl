@@ -18,7 +18,7 @@
 
 ;; refers
 (repl/ns-refers *ns*)
-;; {"doc" "phel\\repl", "require" "phel\\repl", "use" "phel\\repl", "print-colorful" "phel\\repl", "println-colorful" "phel\\repl", "symbol-info" "phel\\repl", "load-file" "phel\\repl", "source" "phel\\repl", "test-ns" "phel\\repl", "eval-str" "phel\\repl", "macroexpand-1" "phel\\repl", "macroexpand" "phel\\repl", "ns-list" "phel\\repl"}
+;; {"doc" "phel\\repl", "require" "phel\\repl", "use" "phel\\repl", "print-colorful" "phel\\repl", "println-colorful" "phel\\repl", "symbol-info" "phel\\repl", "load-file" "phel\\repl", "source" "phel\\repl", "test-ns" "phel\\repl", "eval-capturing" "phel\\repl", "eval-str" "phel\\repl", "macroexpand-1" "phel\\repl", "macroexpand" "phel\\repl", "ns-list" "phel\\repl"}
 
 (repl/ns-aliases *ns*)
 ;; {"repl" "phel\\repl"}
@@ -33,38 +33,18 @@
 ;; phel\json
 
 (repl/ns-publics "phel\json")
-;; {}  ; Would not expect this to be empty??
+;; {"valid-key?" <function:valid-key?>, "encode-value" <function:encode-value>, "encode" <function:encode>, "decode-value" <function:decode-value>, "decode" <function:decode>}
 
 (type json/encode-value)
-;; Cannot resolve symbol 'json/encode-value'  ; !!! not found
+;; :function
 
 (repl/ns-refers "phel\json")
-;; {}
+;; {"doc" "phel\\repl", "require" "phel\\repl", "use" "phel\\repl", "print-colorful" "phel\\repl", "println-colorful" "phel\\repl", "symbol-info" "phel\\repl", "load-file" "phel\\repl", "source" "phel\\repl", "test-ns" "phel\\repl", "eval-capturing" "phel\\repl", "eval-str" "phel\\repl", "macroexpand-1" "phel\\repl", "macroexpand" "phel\\repl", "ns-list" "phel\\repl"}
 
 (repl/ns-refers *ns*)
-;; {"doc" "phel\\repl", "require" "phel\\repl", "use" "phel\\repl", "print-colorful" "phel\\repl", "println-colorful" "phel\\repl", "symbol-info" "phel\\repl", "load-file" "phel\\repl", "source" "phel\\repl", "test-ns" "phel\\repl", "eval-str" "phel\\repl", "macroexpand-1" "phel\\repl", "macroexpand" "phel\\repl", "ns-list" "phel\\repl", "encode-value" "phel\\json"}
+;; {"doc" "phel\\repl", "require" "phel\\repl", "use" "phel\\repl", "print-colorful" "phel\\repl", "println-colorful" "phel\\repl", "symbol-info" "phel\\repl", "load-file" "phel\\repl", "source" "phel\\repl", "test-ns" "phel\\repl", "eval-capturing" "phel\\repl", "eval-str" "phel\\repl", "macroexpand-1" "phel\\repl", "macroexpand" "phel\\repl", "ns-list" "phel\\repl"}
 (repl/ns-aliases *ns*)
 ;; {"repl" "phel\\repl", "json" "phel\\json"}
 
 
-;;; Seems that definitions when using require are not getting loaded
-;;; after https://github.com/jasalt/phel-nrepl/commit/8a2801e2a00a7940df0162a0202522313cb388ee
-;;; while it makes ns form evaluation work with requires
-
-
-;;;; 3) Attempting earlier method forcefully loading namespaces to REPL:
-
-
-(php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))
-
-(repl/ns-publics "phel\json")
-;; {}
-
-(require phel\json)
-;; phel\json
-
-(repl/ns-publics "phel\json")
-;; {"valid-key?" <function:valid-key?>, "encode-value" <function:encode-value>, "encode" <function:encode>, "decode-value" <function:decode-value>, "decode" <function:decode>}
-
-(type json/encode-value)
-;; :function   ; Working again, as it did yesterday
+;;; All seems working now after https://github.com/phel-lang/phel-lang/pull/1142
