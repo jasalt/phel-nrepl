@@ -4,10 +4,30 @@
   (:require phel-nrepl\util :refer [callable->closure]))
 ;; => 1
 
-(def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
+;; stdout logger failing when started from nRepl
+;; (def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
+
+
+;; php/__DIR__
+;; "/home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Evaluator"
+
+;; *file*
+;; "string"
+
+; TODO resolving directory works funny, hardcoded path for now
+
+;; TODO Needs to be existing file!
+(def file (php/amp\file\openfile "/home/user/phel-event-source.log" "w"))
+;;
+
+(def log-handler (php/new \Amp\Log\StreamHandler file))
 ;; => 1
 
 (php/-> log-handler (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
+;; Error: "Object of class Amp\Log\StreamHandler could not be converted to string"
+
+
+;; Error with stdout logger
 ;; Unhandled future: Error: "Object of class Amp\Log\StreamHandler could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin. // file: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php
 
 ;; TODO diagnose another Monolog instance failing when running in another fiber
