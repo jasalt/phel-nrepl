@@ -169,8 +169,24 @@
                               (-> line
                                   (str/replace-first "/;.*/" "")
                                   (str/trim)))
-                            lines)]
+                            lines)
+        stripped-nonempty-lines (filter |(not (str/blank? $)) stripped-lines)]
     (str/join "\n" stripped-lines)))
+
+(comment
+  (cleanup-code-string
+   "(+ 1 1) ; comment
+
+(+ 5 10)")
+
+
+  (def x (cleanup-code-string
+   "(+ 1 1) ; comment
+
+(+ 5 10)"))
+  (str/blank? (first (str/split-lines x)))
+  ;; ""  ??? (-> was related to https://github.com/phel-lang/phel-lang/issues/1122)
+  )
 
 
 (defn handle-eval [request send-fn]
