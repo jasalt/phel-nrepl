@@ -7,9 +7,7 @@
                                     bencode-decode
                                     bencode-encode
                                     ])
-  (:require phel\repl :refer [doc require resolve use print-colorful println-colorful
-                                dir search-doc])
-  )
+  (:require phel\repl))
 
 
 ;;;; Logging
