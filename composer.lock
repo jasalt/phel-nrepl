@@ -1349,12 +1349,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/phel-lang/phel-lang.git",
-                "reference": "6ceef3b5de5080ee768600b2445f7ea1de352c85"
+                "reference": "a467ce15a7bfe5baf21e8dea8b1667d5c5e39270"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/6ceef3b5de5080ee768600b2445f7ea1de352c85",
-                "reference": "6ceef3b5de5080ee768600b2445f7ea1de352c85",
+                "url": "https://api.github.com/repos/phel-lang/phel-lang/zipball/a467ce15a7bfe5baf21e8dea8b1667d5c5e39270",
+                "reference": "a467ce15a7bfe5baf21e8dea8b1667d5c5e39270",
                 "shasum": ""
             },
             "require": {
@@ -1364,16 +1364,16 @@
                 "symfony/console": "^6.0|^7.0|^8.0"
             },
             "require-dev": {
-                "ergebnis/composer-normalize": "^2.48",
+                "ergebnis/composer-normalize": "^2.50",
                 "ext-readline": "*",
-                "friendsofphp/php-cs-fixer": "^3.92",
-                "phpbench/phpbench": "^1.4",
+                "friendsofphp/php-cs-fixer": "^3.94",
+                "phpbench/phpbench": "^1.6",
                 "phpstan/phpstan": "^2.1",
                 "phpunit/phpunit": "^10.5",
                 "psalm/plugin-phpunit": "^0.19",
-                "rector/rector": "^2.2",
+                "rector/rector": "^2.3",
                 "symfony/var-dumper": "^7.4",
-                "vimeo/psalm": "^6.14"
+                "vimeo/psalm": "^6.16"
             },
             "default-branch": true,
             "bin": [
@@ -1421,7 +1421,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2026-03-23T00:33:10+00:00"
+            "time": "2026-03-27T12:19:38+00:00"
         },
         {
             "name": "phpunit/php-timer",
