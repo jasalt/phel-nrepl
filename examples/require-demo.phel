@@ -1,0 +1,70 @@
+;; Evaluate line by line with nREPL
+;; NOTE: cider may eval file ns if connected when a source code buffer has focus in emacs
+
+(ns phel-nrepl\examples\require-demo)
+
+
+;;;; 1) Checking the initial state of the nREPL environment
+
+
+(php/-> (php/:: \Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton
+                (getInstance)) (getNs))
+;; phel-nrepl\examples\require-ok
+*ns*
+;; phel-nrepl\examples\require-ok
+
+(repl/ns-publics *ns*)
+;; {}
+
+;; refers
+(repl/ns-refers *ns*)
+;; {"doc" "phel\\repl", "require" "phel\\repl", "use" "phel\\repl", "print-colorful" "phel\\repl", "println-colorful" "phel\\repl", "symbol-info" "phel\\repl", "load-file" "phel\\repl", "source" "phel\\repl", "test-ns" "phel\\repl", "eval-str" "phel\\repl", "macroexpand-1" "phel\\repl", "macroexpand" "phel\\repl", "ns-list" "phel\\repl"}
+
+(repl/ns-aliases *ns*)
+;; {"repl" "phel\\repl"}
+
+
+;;;; 2) Attempting to require a module, not yet referred by any namespaces (in nrepl.phel or here)
+
+(repl/ns-publics "phel\json")
+;; {}  ; not loaded which is as expected
+
+(require phel\json)
+;; phel\json
+
+(repl/ns-publics "phel\json")
+;; {}  ; Would not expect this to be empty??
+
+(type json/encode-value)
+;; Cannot resolve symbol 'json/encode-value'  ; !!! not found
+
+(repl/ns-refers "phel\json")
+;; {}
+
+(repl/ns-refers *ns*)
+;; {"doc" "phel\\repl", "require" "phel\\repl", "use" "phel\\repl", "print-colorful" "phel\\repl", "println-colorful" "phel\\repl", "symbol-info" "phel\\repl", "load-file" "phel\\repl", "source" "phel\\repl", "test-ns" "phel\\repl", "eval-str" "phel\\repl", "macroexpand-1" "phel\\repl", "macroexpand" "phel\\repl", "ns-list" "phel\\repl", "encode-value" "phel\\json"}
+(repl/ns-aliases *ns*)
+;; {"repl" "phel\\repl", "json" "phel\\json"}
+
+
+;;; Seems that definitions when using require are not getting loaded
+;;; after https://github.com/phel-lang/phel-lang/pull/1120 while it
+;;; makes ns form evaluation work with requires
+
+
+;;;; 3) Attempting earlier method forcefully loading namespaces to REPL:
+
+
+(php/-> (php/new \Phel\Run\RunFacade) (loadPhelNamespaces))
+
+(repl/ns-publics "phel\json")
+;; {}
+
+(require phel\json)
+;; phel\json
+
+(repl/ns-publics "phel\json")
+;; {"valid-key?" <function:valid-key?>, "encode-value" <function:encode-value>, "encode" <function:encode>, "decode-value" <function:decode-value>, "decode" <function:decode>}
+
+(type encode-value)
+;; :function   ; Working again
