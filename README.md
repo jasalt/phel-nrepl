@@ -1,6 +1,6 @@
 # Phel-nrepl (WIP)
 
-`Status: much of initial wiring done, namespace switching / requires are work in progress`
+`Status: pre-alpha`
 
 Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async [amphp/socket](https://amphp.org/socket) server (using PHP 8.1+ Fibers).
 
@@ -10,9 +10,7 @@ Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async
 - [x] handle multiple forms and not just one per eval
 - [ ] use new Phel Core functions for handlers
 - [ ] die gracefully on disconnect
-- [ ] make work with [`clj-nrepl-eval`](https://github.com/bhauman/clojure-mcp-light/tree/main?tab=readme-ov-file#clj-nrepl-eval-llm-nrepl-connection-without-an-mcp)
-
-NOTE: `require` and evaluating `ns` forms is more broken after updating to phel 0.29.0 so need to look at it. Previous diagnostics on old Phel issue https://github.com/phel-lang/phel-lang/issues/766
+- [ ] improve compatibility with [`clj-nrepl-eval`](https://github.com/bhauman/clojure-mcp-light/tree/main?tab=readme-ov-file#clj-nrepl-eval-llm-nrepl-connection-without-an-mcp)
 
 ## Supported nREPL OPS
 - [x] describe
@@ -33,7 +31,7 @@ NOTE: `require` and evaluating `ns` forms is more broken after updating to phel 
 - [ ] info
 - [ ] close
 
-See ops map in `src/nrepl.phel` for more hints..
+See issues and ops map in `src/nrepl.phel` for more hints..
 
 ## Usage
 
