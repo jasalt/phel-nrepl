@@ -1,0 +1,64 @@
+;; There's trouble starting Monolog via nREPL client.
+;; nREPL server itself already uses Monolog so it might be a case that it does
+;; not support "nested" instances or something.
+
+;; Tested both with stdout (A) and file logging (B)
+
+;; Adapted from https://github.com/jasalt/phel-amphp-examples/blob/main/src/http-server/event-source.phel
+
+
+(ns phel-nrepl\examples\failing\amphp-monolog)
+
+
+;;;;; (A)
+
+(def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
+(def log-processor (php/new \Monolog\Processor\PsrLogMessageProcessor))
+(php/-> log-handler (pushProcessor log-processor))
+;; nREPL server crashes with:
+;; Unhandled future: Error: "Object of class Amp\Log\StreamHandler could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin. // file: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php
+
+
+;;;;; (B)
+;; File logging example: https://amphp.org/log#usage
+
+(def tempfile (php/tempnam "/tmp" "phel-monolog"))
+(php/touch tempfile)  ; ensuring log file exists
+(def log-handler (php/new \Amp\Log\StreamHandler (php/amp\file\openfile tempfile "w")))
+(def logger (php/new \Monolog\Logger "foo"))
+(php/-> logger (pushHandler log-handler))
+;; Unhandled future: Error: "Object of class Monolog\Logger could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin. // file: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php
+
+
+;; Running with assertions does not provide any extra info:
+;; AMPHP_DEBUG=true php8.4 -d zend.assertions=1 vendor/bin/phel run src/nrepl.phel
+
+
+;; phel-nrepl-error.log has stack trace (similar for both A and B):
+
+;; Revolt\EventLoop\UncaughtThrowable: Unhandled future: Error: "Object of class Amp\Log\StreamHandler could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin.
+;; in /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php:53 (gen: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php:53)
+;; #0 /home/user/dev/phel/phel-nrepl/vendor/revolt/event-loop/src/EventLoop/Internal/AbstractDriver.php(405): Revolt\EventLoop\UncaughtThrowable::throwingCallback()
+;; #1 /home/user/dev/phel/phel-nrepl/vendor/revolt/event-loop/src/EventLoop/Internal/DriverSuspension.php(127): Revolt\EventLoop\Internal\AbstractDriver::{closure:Revolt\EventLoop\Internal\AbstractDriver::error():403}()
+;; #2 /home/user/dev/phel/phel-nrepl/vendor/amphp/socket/src/ResourceServerSocket.php(128): Revolt\EventLoop\Internal\DriverSuspension->suspend()
+;; #3 /tmp/phel/tmp/__phel_c0ccd0f1ceb16fdf83931ece750ce05e.php(5): Amp\Socket\ResourceServerSocket->accept()
+;; #4 /tmp/phel/tmp/__phel_c0ccd0f1ceb16fdf83931ece750ce05e.php(6): Phel\Compiler\Domain\Evaluator\RequireEvaluator->{closure:/tmp/phel/tmp/__phel_c0ccd0f1ceb16fdf83931ece750ce05e.php:3}()
+;; #5 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Evaluator/RequireEvaluator.php(74): require('/tmp/phel/tmp/_...')
+;; #6 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/CodeCompiler.php(117): Phel\Compiler\Domain\Evaluator\RequireEvaluator->eval()
+;; #7 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Application/CodeCompiler.php(70): Phel\Compiler\Application\CodeCompiler->emitNode()
+;; #8 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/CompilerFacade.php(94): Phel\Compiler\Application\CodeCompiler->compileString()
+;; #9 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Build/Application/FileEvaluator.php(90): Phel\Compiler\CompilerFacade->compileForCache()
+;; #10 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Build/BuildFacade.php(101): Phel\Build\Application\FileEvaluator->evalFile()
+;; #11 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Run/RunFacade.php(71): Phel\Build\BuildFacade->evalFile()
+;; #12 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Run/RunFacade.php(42): Phel\Run\RunFacade->evalFile()
+;; #13 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Run/Infrastructure/Command/RunCommand.php(155): Phel\Run\RunFacade->runFile()
+;; #14 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Run/Infrastructure/Command/RunCommand.php(110): Phel\Run\Infrastructure\Command\RunCommand->executeFile()
+;; #15 /home/user/dev/phel/phel-nrepl/vendor/symfony/console/Command/Command.php(341): Phel\Run\Infrastructure\Command\RunCommand->execute()
+;; #16 /home/user/dev/phel/phel-nrepl/vendor/symfony/console/Application.php(1094): Symfony\Component\Console\Command\Command->run()
+;; #17 /home/user/dev/phel/phel-nrepl/vendor/symfony/console/Application.php(356): Symfony\Component\Console\Application->doRunCommand()
+;; #18 /home/user/dev/phel/phel-nrepl/vendor/symfony/console/Application.php(195): Symfony\Component\Console\Application->doRun()
+;; #19 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Console/Infrastructure/ConsoleBootstrap.php(44): Symfony\Component\Console\Application->run()
+;; #20 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Console/ConsoleFacade.php(26): Phel\Console\Infrastructure\ConsoleBootstrap->run()
+;; #21 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/bin/phel(92): Phel\Console\ConsoleFacade->runConsole()
+;; #22 /home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/bin/phel(93): {closure:/home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/bin/phel:10}()
+;; #23 /home/user/dev/phel/phel-nrepl/vendor/bin/phel(119): include('/home/user/dev/...')
