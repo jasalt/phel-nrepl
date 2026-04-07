@@ -139,9 +139,12 @@
      (callable->closure
       (fn []
         (try
-          (let [last-result (repl/eval-str code-input)]
-            (send-fn request {:value (str last-result) :status ["done"]}))
-          (catch \Exception e
+          (let [last-result (repl/eval-str code-input)
+                shown (try (str last-result)
+                           (catch \Throwable _
+                             (php/var_export last-result true)))]
+            (send-fn request {:value shown :status ["done"]}))
+          (catch \Throwable e
             (log-error (str "eval error: " e))
             (send-fn request {:value (str "ERROR: " e) :status ["done"]}))))))))
 

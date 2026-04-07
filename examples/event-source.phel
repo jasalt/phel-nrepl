@@ -24,25 +24,21 @@
 ;; => 1
 
 (php/-> log-handler (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
-;; Error: "Object of class Amp\Log\StreamHandler could not be converted to string"
+;; {:value "\\Amp\\Log\\StreamHandler::__set_state(array(\n   'level' => \n  \\Monolog\\Level::Debug,\n   'bubble' => true, ...
 
-
-;; Error with stdout logger
-;; Unhandled future: Error: "Object of class Amp\Log\StreamHandler could not be converted to string"; Await the Future with Future::await() before the future is destroyed or use Future::ignore() to suppress this exception. Enable assertions and set AMP_DEBUG=true in the process environment to track its origin. // file: /home/user/dev/phel/phel-nrepl/vendor/amphp/amp/src/Internal/FutureState.php
-
-;; TODO diagnose another Monolog instance failing when running in another fiber
-
-(php/-> (setFormatter (php/new \Amp\Log\ConsoleFormatter)))
-
-;; (doto log-handler
-;;   (php/-> (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
-;;   (php/-> (setFormatter (php/new \Amp\Log\ConsoleFormatter))))
+(doto log-handler
+  (php/-> (pushProcessor (php/new \Monolog\Processor\PsrLogMessageProcessor)))
+  (php/-> (setFormatter (php/new \Amp\Log\ConsoleFormatter))))
+;; => \Amp\Log\StreamHandler::__set_state(array('level' => ..
 
 
 (def logger (php/new \Monolog\Logger "server"))
 (php/-> logger (pushHandler log-handler))
+;; \Monolog\Logger::__set_state(array('name' => 'server', ...
 
 (def server (php/:: \Amp\Http\Server\SocketHttpServer (createForDirectAccess logger)))
+;; ERROR: Error: Class "Amp\Http\Server\SocketHttpServer" not found
+
 
 (doto server
   (php/-> (expose (php/new \Amp\Socket\InternetAddress "0.0.0.0" 1337)))
