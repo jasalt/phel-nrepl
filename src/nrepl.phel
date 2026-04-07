@@ -267,9 +267,6 @@
 (def server (php/amp\socket\listen (str server-address ":" port)))
 (def address (php/-> server (getAddress)))
 
-(log-info (str "nREPL server started on port " port " on host "
-               server-address " - nrepl://" server-address ":" port "\n"))
-(log-info "TODO send startup message direct to stdout")
 
 ;; Make ns form evaluating behave more like in stock REPL
 ;; https://github.com/phel-lang/phel-lang/pull/820/changes#diff-3f51b3b4f984bfefc881f9c4944d20cc95dab902e3ad85ca8e68acd21e73d9e6
@@ -279,19 +276,28 @@
            (php/:: \Phel\Shared\ReplConstants REPL_MODE)
            true))
 
-(loop []
-  (when-let [socket (php/-> server (accept))]
-    (php/amp\async
-     (callable->closure  ;; makes Phel anonymous fn compatible with AMPHP
-      (fn []
-        (log-info (str "accepted connection from " address))
-        (loop [send-fn (make-send-fn socket)]
-          (when-let [chunk (php/rtrim (php/-> socket (read)))]
-            (try
-              ;; (log-debug (str "RECEIVED: " chunk))
-              (handle-request (bencode-decode chunk) send-fn)
-              (catch
-                  \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
-            (recur send-fn)))
-        (php/-> socket (end)))))
-    (recur)))
+(defn start-server []
+  (loop []
+    (when-let [socket (php/-> server (accept))]
+      (php/amp\async
+       (callable->closure  ;; makes Phel anonymous fn compatible with AMPHP
+        (fn []
+          (log-info (str "accepted connection from " address))
+          (loop [send-fn (make-send-fn socket)]
+            (when-let [chunk (php/rtrim (php/-> socket (read)))]
+              (try
+                ;; (log-debug (str "RECEIVED: " chunk))
+                (handle-request (bencode-decode chunk) send-fn)
+                (catch
+                    \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
+              (recur send-fn)))
+          (php/-> socket (end)))))
+      (recur)))
+  )
+
+
+;; TODO don't run with the test runner
+;; TODO send startup message direct to stdout
+(log-info (str "Starting nREPL server on port " port " on host "
+               server-address " - nrepl://" server-address ":" port "\n"))
+(start-server)
