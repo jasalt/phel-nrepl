@@ -165,13 +165,24 @@
         resp {:completions matching-defs :status ["done"]}]
     (send-fn request resp)))
 
+(defn- create-macro-expander []
+  (php/new \Phel\Compiler\Application\MacroExpander
+           (php/new \Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment)))
 
-(defn handle-macroexpand  ; TODO use https://github.com/phel-lang/phel-lang/pull/1138
-  "fake macroexpand, compiling expr to PHP"
+(defn handle-macroexpand
+  "Macroexpand using MacroExpander"
   [request send-fn]
-  (let [result (compile (read-string (get request :code)))
-        resp {:expansion result :status ["done"]}]
-    (send-fn request resp)))
+  (try
+    (let [code-input (get request :code)
+          _ (log-debug (str "macroexpand code: " code-input))
+          form (read-string code-input)
+          macro-expander (create-macro-expander)
+          expanded-form (php/-> macro-expander (macroexpand form))
+          resp {:expansion (str expanded-form) :status ["done"]}]
+      (send-fn request resp))
+    (catch \Throwable e
+      (log-error (str "macroexpand error: " e))
+      (send-fn request {:expansion (str "ERROR: " e) :status ["done"]}))))
 
 (defn handle-lookup
   "WIP lookup, used for info and lookup ops"
@@ -206,7 +217,7 @@
    :clone       handle-clone     ; TODO
    :complete    handle-complete  ; TODO update
    :describe    handle-describe  ; TODO update
-   :macroexpand handle-macroexpand ; TODO
+   :macroexpand handle-macroexpand
 
    :lookup      handle-lookup
    :info        handle-lookup     ; cider-nrepl middleware
