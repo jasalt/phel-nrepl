@@ -37,12 +37,11 @@
 ;; \Monolog\Logger::__set_state(array('name' => 'server', ...
 
 (def server (php/:: \Amp\Http\Server\SocketHttpServer (createForDirectAccess logger)))
-;; ERROR: Error: Class "Amp\Http\Server\SocketHttpServer" not found
-
 
 (doto server
   (php/-> (expose (php/new \Amp\Socket\InternetAddress "0.0.0.0" 1337)))
   (php/-> (expose (php/new \Amp\Socket\InternetAddress "[::]" 1337))))
+;; => \Amp\Http\Server\SocketHttpServer::__set_state(array( 'status' => \Amp\Http\Server\HttpServerStatus::Stopped,...
 
 (def event-source-js
   (str

@@ -25,5 +25,9 @@
   },
   "scripts": {
     "test": "vendor/bin/phel test"
+  },
+  "require-dev": {
+    "amphp/http": "^2.1",
+    "amphp/http-server": "^3.4"
   }
 }
