@@ -4,21 +4,11 @@
   (:require phel-nrepl\util :refer [callable->closure]))
 ;; => 1
 
-;; stdout logger failing when started from nRepl
-;; (def log-handler (php/new \Amp\Log\StreamHandler (php/amp\bytestream\getstdout)))
 
-
-;; php/__DIR__
-;; "/home/user/dev/phel/phel-nrepl/vendor/phel-lang/phel-lang/src/php/Compiler/Domain/Evaluator"
-
-;; *file*
-;; "string"
-
-; TODO resolving directory works funny, hardcoded path for now
-
-;; TODO Needs to be existing file!
-(def file (php/amp\file\openfile "/home/user/phel-event-source.log" "w"))
-;;
+;; Needs to be existing file!
+(def logfile "/tmp/phel-event-source.log")
+(php/touch logfile)
+(def file (php/amp\file\openfile logfile "w"))
 
 (def log-handler (php/new \Amp\Log\StreamHandler file))
 ;; => 1
@@ -67,6 +57,10 @@
      (raw-string event-source-js)]]))
 ;; => 1
 
+(defn message-fn []
+  "Event"
+  )
+
 (defn handler-fn [request]
   ;; (php/dd request)
   (let [path (php/-> (php/-> request (getUri)) (getPath))]
@@ -80,9 +74,9 @@
                          (php/:: \Amp\Http\HttpStatus OK)
                          (php-associative-array "content-type" "text/event-stream; charset=utf-8")
                          (php/new \Amp\ByteStream\ReadableIterableStream
-                                  (dofor [i :range [0 30]]
+                                  (dofor [i :range [0 100]]
                                          (php/amp\delay 0.5)
-                                         (php/yield (str "event: notification\ndata: Event " i "\n\n")))))
+                                         (php/yield (str "event: notification\ndata: " (message-fn) " " i "\n\n")))))
       ;; else
       (php/new \Amp\Http\Server\Response
                (php/:: \Amp\Http\HttpStatus OK)
@@ -90,7 +84,7 @@
                "404"))))
 
 (php/-> server (start (php/new \Amp\Http\Server\RequestHandler\ClosureRequestHandler
-                               (callable->closure handler-fn))
+                               (callable->closure #(handler-fn %)))
                       (php/new \Amp\Http\Server\DefaultErrorHandler)))
 
 (def signal (php/amp\trapsignal (php-indexed-array php/SIGINT php/SIGTERM)))
