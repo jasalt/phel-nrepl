@@ -1,0 +1,9 @@
+(ns phel-nrepl\start
+  (:require phel-nrepl\nrepl :refer [start-server log-info])
+  )
+
+;; TODO don't run with the test runner
+;; TODO send startup message direct to stdout
+(log-info (str "Starting nREPL server on port " port " on host "
+               server-address " - nrepl://" server-address ":" port "\n"))
+(start-server)
