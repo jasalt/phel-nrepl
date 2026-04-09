@@ -38,7 +38,7 @@ See issues and ops map in `src/nrepl.phel` for more hints..
 Start server:
 ```
 composer install
-vendor/bin/phel run startup.phel
+vendor/bin/phel run start.phel
 ```
 
 Test communication with `nc`:
@@ -120,7 +120,7 @@ Licensed under the [MIT license](https://opensource.org/licenses/MIT).
 #### nREPL connection
 Using https://github.com/lambdaisland/nrepl-proxy
 ```
-vendor/bin/phel run startup.phel
+vendor/bin/phel run start.phel
 clojure -Sdeps '{:deps {com.lambdaisland/nrepl-proxy {:mvn/version "0.2.8-alpha"}}}' -X lambdaisland.nrepl-proxy/start :port 9999 :attach 9999
 ```
 
@@ -128,7 +128,7 @@ Connect to proxy listening to port 9999.
 
 #### Phel internals
 Logging from Phel internals is available via [Patchwork](https://github.com/phel-lang/phel-lang/discussions/796).
-Modify `tracer.php` with classes/modules to trace and start script with `./pphel run startup.phel`, tail log files created in the folder during execution.
+Modify `tracer.php` with classes/modules to trace and start script with `./pphel run start.phel`, tail log files created in the folder during execution.
 
 
 # TODO  (after this section is just some mess)
