@@ -134,6 +134,9 @@
 ;; TODO eval capturing https://github.com/phel-lang/phel-lang/pull/1135/ & https://github.com/phel-lang/phel-lang/pull/1123
 ;; TODO type annotations https://github.com/phel-lang/phel-lang/pull/1137
 ;; TODO error handling https://github.com/phel-lang/phel-lang/pull/1130
+
+(def last-stacktrace (var nil))  ;; TODO analyze-last-stacktrace op
+
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
         _ (log-debug code-input)]
@@ -148,7 +151,8 @@
             (send-fn request {:value shown :status ["done"] :ns *ns*}))
           (catch \Throwable e
             (log-error (str "eval error: " e))
-            (send-fn request {:value (str "ERROR: " e) :status ["done"]}))))))))
+            (set! last-stacktrace e)
+            (send-fn request {:ex (str e) :status ["error" "eval-error"]}))))))))
 
 ;; d4:code7:(+ 1 1)2:op4:evale
 
