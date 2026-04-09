@@ -145,7 +145,7 @@
                 shown (try (str last-result)
                            (catch \Throwable _
                              (php/var_export last-result true)))]
-            (send-fn request {:value shown :status ["done"]}))
+            (send-fn request {:value shown :status ["done"] :ns *ns*}))
           (catch \Throwable e
             (log-error (str "eval error: " e))
             (send-fn request {:value (str "ERROR: " e) :status ["done"]}))))))))
