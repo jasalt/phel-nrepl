@@ -1,0 +1,71 @@
+(ns phel-nrepl\nrepl-tests
+  (:require phel\debug :refer [dbg])
+  (:require phel\test :refer [deftest is])
+  (:require phel-nrepl\nrepl :refer [handle-macroexpand])
+  (:require phel\str))
+
+;;;; Helper Functions
+
+(defn- make-send-fn
+  "Create a mock send-fn that captures responses in an atom-backed vector"
+  []
+  (let [responses (var [])  ; TODO atom
+        send-fn (fn [_request response]
+                  (swap! responses conj response))]
+    {:send-fn send-fn
+     :responses responses}))
+
+(defn- get-response
+  "Get the first captured response from make-send-fn result"
+  [capture]
+  (first (deref (:responses capture))))
+
+;;;; Tests
+
+(deftest test-macroexpand-simple-form
+  "Test that macroexpand handles a simple form without macros"
+  (let [capture (make-send-fn)
+        request {:op "macroexpand" :code "123" :id "test-id" :session "test-session"}]
+    (handle-macroexpand request (:send-fn capture))
+    (let [response (get-response capture)]
+      (is (= "123" (:expansion response)))
+      (is (= ["done"] (:status response))))))
+
+;; TODO Why (+ 1 2) evaluated to: (do (assert-non-nil 1 2) (+ 1 2))
+
+(deftest test-macroexpand-when-form
+  "Test that macroexpand handles when macro form"
+  (let [capture (make-send-fn)
+        request {:op "macroexpand" :code "(when 1 2)" :id "test-id" :session "test-session"}]
+    (handle-macroexpand request (:send-fn capture))
+    (let [response (get-response capture)]
+      (is (= "(if 1 (do 2))" (:expansion response)))
+      (is (= ["done"] (:status response))))))
+
+(deftest test-macroexpand-error-on-invalid-code
+  "Test that invalid Phel code is handled gracefully"
+  (let [capture (make-send-fn)
+        request {:op "macroexpand" :code "(+ 1 1" :id "test-id" :session "test-session"}]
+    ;; TODO throws Phel\Compiler\Domain\Parser\Exceptions\UnfinishedParserException: Unterminated list (EOF)
+    (handle-macroexpand request (:send-fn capture))
+    (let [response (get-response capture)]
+      (is (true? (str/contains? (:expansion response) "ERROR:")))
+      (is (= ["done"] (:status response))))))
+
+(deftest test-macroexpand-empty-code
+  "Test macroexpand with empty string code"
+  (let [capture (make-send-fn)
+        request {:op "macroexpand" :code "" :id "test-id" :session "test-session"}]
+    (handle-macroexpand request (:send-fn capture))
+    (let [response (get-response capture)]
+      (is (= "" (:expansion response)))
+      (is (= ["done"] (:status response))))))
+
+(deftest test-macroexpand-nil-code
+  "Test macroexpand with nil code"
+  (let [capture (make-send-fn)
+        request {:op "macroexpand" :code "nil" :id "test-id" :session "test-session"}]
+    (handle-macroexpand request (:send-fn capture))
+    (let [response (get-response capture)]
+      (is (= "nil" (:expansion response)))  ; TODO Evaluated to "" but is not: = to nil
+      (is (= ["done"] (:status response))))))
