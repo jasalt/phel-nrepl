@@ -1,5 +1,6 @@
 (ns phel-nrepl\nrepl
   (:require phel\str :as str)
+  (:require phel\repl)
   (:require phel-nrepl\util :refer [callable->closure
                                     partialr
                                     all-phel-def-names
@@ -7,7 +8,8 @@
                                     bencode-decode
                                     bencode-encode
                                     ])
-  (:require phel\repl))
+  (:use \Phel\Compiler\Application\MacroExpander)
+  (:use \Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment))
 
 
 ;;;; Logging
@@ -206,17 +208,14 @@
         resp {:completions matching-defs :status ["done"]}]
     (send-fn request resp)))
 
-(defn- create-macro-expander []
-  (php/new \Phel\Compiler\Application\MacroExpander
-           (php/new \Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment)))
-
 (defn handle-macroexpand
   "Macroexpand using MacroExpander"
   [request send-fn]
   (try
     (let [code-input (get request :code)
           form (read-string code-input)
-          macro-expander (create-macro-expander)
+          macro-expander (php/new MacroExpander
+                                  (php/new GlobalEnvironment))
           expanded-form (case
                             (:expander request)
                           "macroexpand-1"
@@ -224,7 +223,7 @@
                               (php/-> macro-expander (macroexpand1 form)))
                           ;; default
                           (do (log-debug (str "macroexpand code: " code-input))
-                            (php/-> macro-expander (macroexpand form))))
+                              (php/-> macro-expander (macroexpand form))))
           resp {:expansion (str expanded-form) :status ["done"]}]
       (send-fn request resp))
     (catch \Throwable e
