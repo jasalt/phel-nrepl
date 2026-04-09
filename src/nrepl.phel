@@ -214,6 +214,14 @@
 ;; (bencode-encode {:op "macroexpand" :code "(def foo 1)"})
 ;; d4:code11:(def foo 1)2:op11:macroexpande
 
+(defn handle-ns-list
+  "Return a sorted list of all namespaces.
+  Optional parameter :filter-regexps not supported
+  TODO cider-browse-ns-all does not show them in UI"
+  [request send-fn]
+  (let [namespaces (repl/ns-list)
+        resp {:ns namespaces :status ["done"]}]
+    (send-fn request resp)))
 
 (def ops
   "A map of operations supported by the nREPL server (as keywords) to function
@@ -235,6 +243,7 @@
    ;; Cider extension opts
 
    :macroexpand handle-macroexpand
+   :ns-list     handle-ns-list
    :complete    handle-complete  ; TODO update
    :info        handle-lookup     ; cider-nrepl middleware
    ;; :apropos   handle-apropos  ; TODO
