@@ -38,13 +38,13 @@ See issues and ops map in `src/nrepl.phel` for more hints..
 Start server:
 ```
 composer install
-vendor/bin/phel run src/nrepl.phel
+vendor/bin/phel run startup.phel
 ```
 
 Test communication with `nc`:
 ```
-$ nc localhost 8888
-nREPL server started on port 8888 on host 127.0.0.1 - nrepl://127.0.0.1:8888
+$ nc localhost 9999
+nREPL server started on port 9999 on host 127.0.0.1 - nrepl://127.0.0.1:9999
 d2:op8:describee
 d3:opsl4:eval5:clone8:describee6:statusl4:donee8:versionsd4:phel8:dev-main3:php6:8.2.26ee
 d4:code7:(+ 1 1)2:op4:evale
@@ -54,7 +54,7 @@ d6:statusl4:donee5:valuei2ee
 Connection with Emacs Cider and Calva work mostly.
 
 ### Cider
-Use `M-x` `cider-connect` and connect to localhost port 8888.
+Use `M-x` `cider-connect` and connect to localhost port 9999.
 
 For logging use `(setq nrepl-log-messages t)`.
 
@@ -120,15 +120,15 @@ Licensed under the [MIT license](https://opensource.org/licenses/MIT).
 #### nREPL connection
 Using https://github.com/lambdaisland/nrepl-proxy
 ```
-vendor/bin/phel run src/nrepl.phel
-clojure -Sdeps '{:deps {com.lambdaisland/nrepl-proxy {:mvn/version "0.2.8-alpha"}}}' -X lambdaisland.nrepl-proxy/start :port 9999 :attach 8888
+vendor/bin/phel run startup.phel
+clojure -Sdeps '{:deps {com.lambdaisland/nrepl-proxy {:mvn/version "0.2.8-alpha"}}}' -X lambdaisland.nrepl-proxy/start :port 9999 :attach 9999
 ```
 
 Connect to proxy listening to port 9999.
 
 #### Phel internals
 Logging from Phel internals is available via [Patchwork](https://github.com/phel-lang/phel-lang/discussions/796).
-Modify `tracer.php` with classes/modules to trace and start script with `./pphel run src/nrepl.phel`, tail log files created in the folder during execution.
+Modify `tracer.php` with classes/modules to trace and start script with `./pphel run startup.phel`, tail log files created in the folder during execution.
 
 
 # TODO  (after this section is just some mess)

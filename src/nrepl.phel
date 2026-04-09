@@ -262,11 +262,10 @@
 ;;;; Server
 
 (def server-address "127.0.0.1")
-(def port 8888)
+(def port 9999)
 
-(def server (php/amp\socket\listen (str server-address ":" port)))
-(def address (php/-> server (getAddress)))
-
+(def server (var nil))
+(def address (var nil))
 
 ;; Make ns form evaluating behave more like in stock REPL
 ;; https://github.com/phel-lang/phel-lang/pull/820/changes#diff-3f51b3b4f984bfefc881f9c4944d20cc95dab902e3ad85ca8e68acd21e73d9e6
@@ -277,8 +276,10 @@
            true))
 
 (defn start-server []
+  (set! server (php/amp\socket\listen (str server-address ":" port)))
+  (set! address (php/-> @server (getAddress)))
   (loop []
-    (when-let [socket (php/-> server (accept))]
+    (when-let [socket (php/-> @server (accept))]
       (php/amp\async
        (callable->closure  ;; makes Phel anonymous fn compatible with AMPHP
         (fn []
@@ -294,5 +295,3 @@
           (php/-> socket (end)))))
       (recur)))
   )
-
-(start-server)
