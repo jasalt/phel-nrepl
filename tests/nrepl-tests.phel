@@ -69,3 +69,33 @@
     (let [response (get-response capture)]
       (is (= "nil" (:expansion response)))  ; TODO Evaluated to "" but is not: = to nil
       (is (= ["done"] (:status response))))))
+
+
+;; https://clojuredocs.org/clojure.walk/macroexpand-all#example-542692d7c026201cdc32711f
+
+(defmacro plus [n1 n2]
+  `(+ ~n1 ~n2))
+
+(defmacro pl [p1 p2]
+  `(plus ~p1 ~p2))
+
+;; REPL:
+;; (macroexpand-1 (plus 3 4))
+;; => (+ 3 4)
+
+(deftest test-macroexpand-1
+  (let [capture (make-send-fn)
+        request {:op "macroexpand" :expander "macroexpand-1" :code "(plus 3 4)"
+                 :id "test-id" :session "test-session"}]
+    (handle-macroexpand request (:send-fn capture))
+    (let [response (get-response capture)]
+      (is (= "(+ 3 4)" (:expansion response)))
+      (is (= ["done"] (:status response))))))
+
+;; Test runner result:
+;; Failure (/home/user/dev/phel/phel-nrepl/tests/nrepl-tests.phel:85)
+;;           Test: (:expansion response)
+;;   evaluated to: (plus 3 4)
+;;     but is not: = to (+ 3 4)
+
+;; TODO Why isn't test runner working same way as REPL?

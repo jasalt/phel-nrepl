@@ -211,19 +211,21 @@
   [request send-fn]
   (try
     (let [code-input (get request :code)
-          _ (log-debug (str "macroexpand code: " code-input))
           form (read-string code-input)
           macro-expander (create-macro-expander)
-          expanded-form (php/-> macro-expander (macroexpand form))
+          expanded-form (case
+                            (:expander request)
+                          "macroexpand-1"
+                          (do (log-debug (str "macroexpand-1 code: " code-input))
+                              (php/-> macro-expander (macroexpand1 form)))
+                          ;; default
+                          (do (log-debug (str "macroexpand code: " code-input))
+                            (php/-> macro-expander (macroexpand form))))
           resp {:expansion (str expanded-form) :status ["done"]}]
       (send-fn request resp))
     (catch \Throwable e
       (log-error (str "macroexpand error: " e))
       (send-fn request {:expansion (str "ERROR: " e) :status ["done"]}))))
-
-
-;; (bencode-encode {:op "macroexpand" :code "(def foo 1)"})
-;; d4:code11:(def foo 1)2:op11:macroexpande
 
 (defn handle-ns-list
   "Return a sorted list of all namespaces.
