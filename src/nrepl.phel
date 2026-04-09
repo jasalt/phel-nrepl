@@ -112,6 +112,8 @@
 
 ;;;; Operation handlers
 
+;;; Core ops https://nrepl.org/nrepl/ops.html
+
 (declare ops)
 
 (defn handle-clone [request send-fn]
@@ -150,7 +152,31 @@
 
 ;; d4:code7:(+ 1 1)2:op4:evale
 
-;; https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html#complete
+;; (defn handle-load-file []  ; TODO
+;;   ;; https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L285
+;;   []
+;;   )
+
+(defn handle-lookup
+  "WIP lookup, used for info and lookup ops"
+  [request send-fn]
+  (let [sym (get request :sym)
+        sym-doc (phel-doc sym)
+        _ (log-debug (str "sym-doc: " sym-doc))
+        info {;; :arglists-str
+              :file "TODO_file"
+              :line 1
+              :column 1
+              :ns "TODO_ns"
+              :status ["done"]
+              :doc-fragments [{:type "text" :content sym-doc}]
+              :name sym}
+        resp info]  ; {:info info}
+    (send-fn request resp)))
+
+
+;;; Cider ops https://docs.cider.mx/cider-nrepl/nrepl-api/ops.html
+
 (defn handle-complete [request send-fn]
   (let [prefix (get request :prefix)
         completions (complete prefix)
@@ -184,48 +210,35 @@
       (log-error (str "macroexpand error: " e))
       (send-fn request {:expansion (str "ERROR: " e) :status ["done"]}))))
 
-(defn handle-lookup
-  "WIP lookup, used for info and lookup ops"
-  [request send-fn]
-  (let [sym (get request :sym)
-        sym-doc (phel-doc sym)
-        _ (log-debug (str "sym-doc: " sym-doc))
-        info {;; :arglists-str
-              :file "TODO_file"
-              :line 1
-              :column 1
-              :ns "TODO_ns"
-              :status ["done"]
-              :doc-fragments [{:type "text" :content sym-doc}]
-              :name sym}
-        resp info]  ; {:info info}
-    (send-fn request resp)))
-
 
 ;; (bencode-encode {:op "macroexpand" :code "(def foo 1)"})
 ;; d4:code11:(def foo 1)2:op11:macroexpande
 
-;; (defn handle-load-file []  ; TODO
-;;   ;; https://github.com/ikappaki/basilisp-nrepl-async/blob/main/src/basilisp_nrepl_async/nrepl_server.lpy#L285
-;;   []
-;;   )
 
 (def ops
   "A map of operations supported by the nREPL server (as keywords) to function
   handlers for those operations."
-  {:eval        handle-eval
+  {;; nREPL standard opts
+
    :clone       handle-clone     ; TODO
-   :complete    handle-complete  ; TODO update
+   ;; :close     handle-close
+   ;; :completions
    :describe    handle-describe  ; TODO update
-   :macroexpand handle-macroexpand
-
+   :eval        handle-eval
+   ;; :forward-system-output
+   ;; :interrupt
+   ;; :load-file handle-load-file
    :lookup      handle-lookup
-   :info        handle-lookup     ; cider-nrepl middleware
+   ;; :ls-sessions
+   ;; :stdin
 
+   ;; Cider extension opts
+
+   :macroexpand handle-macroexpand
+   :complete    handle-complete  ; TODO update
+   :info        handle-lookup     ; cider-nrepl middleware
    ;; :apropos   handle-apropos  ; TODO
    ;; :eldoc     handle-lookup     ; cider-nrepl middleware
-   ;; :close     handle-close
-   ;; :load-file handle-load-file
    ;; :classpath handle-classpath
    })
 
