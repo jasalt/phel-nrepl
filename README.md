@@ -10,7 +10,7 @@ Phel [Phel](https://phel-lang.org/) nREPL server implementation leveraging async
 - [x] handle multiple forms and not just one per eval
 - [ ] use new Phel Core functions for handlers
 - [ ] die gracefully on disconnect
-- [ ] improve compatibility with [`clj-nrepl-eval`](https://github.com/bhauman/clojure-mcp-light/tree/main?tab=readme-ov-file#clj-nrepl-eval-llm-nrepl-connection-without-an-mcp)
+- [ ] improve compatibility with [`clj-nrepl-eval`](https://github.com/bhauman/clojure-mcp-light/tree/main?tab=readme-ov-file#clj-nrepl-eval-llm-nrepl-connection-without-an-mcp) and [`brepl`](https://github.com/licht1stein/brepl) both hanging the server
 
 ## Supported nREPL OPS
 - [x] describe
