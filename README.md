@@ -117,14 +117,22 @@ Phel ILT project (used for some initial inspiration): https://codeberg.org/mmont
 Licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
 ### Debugging
-#### nREPL connection
+#### Cider
+Enable logging messages with `M-x toggle-nrepl-message-logging` and see `*nrepl-messages...` buffer.
+
+#### nREPL proxy
+nREPL proxy could help diagnosing any client but currently this doesn't work due to PHP bencode library throwing decoding error.
+
 Using https://github.com/lambdaisland/nrepl-proxy
+
 ```
 vendor/bin/phel run start.phel
-clojure -Sdeps '{:deps {com.lambdaisland/nrepl-proxy {:mvn/version "0.2.8-alpha"}}}' -X lambdaisland.nrepl-proxy/start :port 9999 :attach 9999
+clojure -Sdeps '{:deps {com.lambdaisland/nrepl-proxy {:mvn/version "0.2.8-alpha"}}}' -X lambdaisland.nrepl-proxy/start :port 8888 :attach 9999
 ```
 
-Connect to proxy listening to port 9999.
+Connect to proxy listening to port 8888.
+
+Requires full Clojure CLI installation (does not work with Clojure from Debian repo).
 
 #### Phel internals
 Logging from Phel internals is available via [Patchwork](https://github.com/phel-lang/phel-lang/discussions/796).
