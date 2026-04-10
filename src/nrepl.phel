@@ -209,7 +209,11 @@
     (send-fn request resp)))
 
 (defn handle-macroexpand
-  "Macroexpand using MacroExpander"
+  "Macroexpand using \Phel\Compiler\Application\MacroExpander
+  NOTE: read-string makes input form work as if it was quoted
+  makes code behave as if it was quoted even when it's not:
+  (= (read-string \"(+ 5 4)\") '(+ 5 4)) ; => true
+  (macroexpand (read-string \"(+ 5 4)\")) ; => (+ 5 4)"
   [request send-fn]
   (try
     (let [code-input (get request :code)
@@ -323,12 +327,19 @@
         (fn []
           (log-info (str "accepted connection from " address))
           (loop [send-fn (make-send-fn socket)]
-            (when-let [chunk (php/rtrim (php/-> socket (read)))]
-              (try
-                ;; (log-debug (str "RECEIVED: " chunk))
-                (handle-request (bencode-decode chunk) send-fn)
-                (catch
-                    \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
+            ;; when "" when-let proceeds and fails
+            ;; (not )
+            (let [chunk (php/rtrim (php/-> socket (read)))]
+
+              (when-not (or (nil? chunk) (= "" chunk))
+                (log-debug (str "RECEIVED: " chunk))
+                (log-debug (str "TYPE: " (type chunk)))
+                (log-debug (str "Is empty string: " (= "" chunk)))
+                (try
+                  (handle-request (bencode-decode chunk) send-fn)
+                  (catch
+                      \Exception e (do
+                                     (log-error (str "UNKNOWN HANDLING ERROR: " e))))))
               (recur send-fn)))
           (php/-> socket (end)))))
       (recur)))
