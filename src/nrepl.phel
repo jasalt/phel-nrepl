@@ -327,19 +327,12 @@
         (fn []
           (log-info (str "accepted connection from " address))
           (loop [send-fn (make-send-fn socket)]
-            ;; when "" when-let proceeds and fails
-            ;; (not )
-            (let [chunk (php/rtrim (php/-> socket (read)))]
-
-              (when-not (or (nil? chunk) (= "" chunk))
-                (log-debug (str "RECEIVED: " chunk))
-                (log-debug (str "TYPE: " (type chunk)))
-                (log-debug (str "Is empty string: " (= "" chunk)))
-                (try
-                  (handle-request (bencode-decode chunk) send-fn)
-                  (catch
-                      \Exception e (do
-                                     (log-error (str "UNKNOWN HANDLING ERROR: " e))))))
+            (when-let [chunk (php/rtrim (php/-> socket (read)))]
+              (try
+                ;; (log-debug (str "RECEIVED: " chunk))
+                (handle-request (bencode-decode chunk) send-fn)
+                (catch
+                    \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
               (recur send-fn)))
           (php/-> socket (end)))))
       (recur)))
