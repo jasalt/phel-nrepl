@@ -22,8 +22,8 @@
 
 ;;;; Tests
 
-(deftest test-macroexpand-simple-form
-  "Test that macroexpand handles a simple form without macros"
+(deftest test-macroexpand-scalar-value
+  "Test that macroexpand handles a scalar value"
   (let [capture (make-send-fn)
         request {:op "macroexpand" :code "123" :id "test-id" :session "test-session"}]
     (handle-macroexpand request (:send-fn capture))
@@ -31,7 +31,21 @@
       (is (= "123" (:expansion response)))
       (is (= ["done"] (:status response))))))
 
-;; TODO Why (+ 1 2) evaluated to: (do (assert-non-nil 1 2) (+ 1 2))
+;; TODO fails while REPL works as expected
+(deftest test-macroexpand-simple-form
+  "Test that macroexpand handles a simple form without macros"
+  (let [capture (make-send-fn)
+        request {:op "macroexpand" :code "(+ 1 1)" :id "test-id" :session "test-session"}]
+    (handle-macroexpand request (:send-fn capture))
+    (let [response (get-response capture)]
+      (is (= "2" (:expansion response)))
+      (is (= ["done"] (:status response))))))
+;; Test runner result:
+;; ~~~~~~~~~~
+;; Failure (/home/user/dev/phel/phel-nrepl/tests/nrepl-tests.phel:35)
+;;           Test: (:expansion response)
+;;   evaluated to: (+ 1 1)
+;;     but is not: = to 2
 
 (deftest test-macroexpand-when-form
   "Test that macroexpand handles when macro form"
@@ -67,7 +81,7 @@
         request {:op "macroexpand" :code "nil" :id "test-id" :session "test-session"}]
     (handle-macroexpand request (:send-fn capture))
     (let [response (get-response capture)]
-      (is (= "nil" (:expansion response)))  ; TODO Evaluated to "" but is not: = to nil
+      (is (= "" (:expansion response)))
       (is (= ["done"] (:status response))))))
 
 
@@ -81,7 +95,7 @@
 
 ;; REPL:
 ;; (macroexpand-1 (plus 3 4))
-;; => (+ 3 4)
+;; => 7
 
 (deftest test-macroexpand-1
   (let [capture (make-send-fn)
@@ -99,3 +113,4 @@
 ;;     but is not: = to (+ 3 4)
 
 ;; TODO Why isn't test runner working same way as REPL?
+;; Same result as with test-macroexpand-simple-form.
