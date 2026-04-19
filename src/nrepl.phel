@@ -1,13 +1,12 @@
 (ns phel-nrepl\nrepl
   (:require phel\string :as str)
-  (:require phel\repl)
   (:require phel\async :refer [async])
+  (:require phel-nrepl\bencode :refer [bencode-decode bencode-encode])
   (:require phel-nrepl\util :refer [partialr
                                     all-phel-def-names
                                     apropos
-                                    bencode-decode
-                                    bencode-encode
                                     ])
+  (:require phel\repl)
   (:use \Phel\Compiler\Application\MacroExpander)
   (:use \Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment))
 
