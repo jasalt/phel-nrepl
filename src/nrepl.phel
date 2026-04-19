@@ -12,11 +12,12 @@
   (:use \Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment))
 
 (def get-stdout php/\Amp\ByteStream\getStdout)
+(def listen     php/\Amp\Socket\listen)
 
 ;;;; Logging
 
 (def log-handler (new \Amp\Log\StreamHandler (get-stdout)))
-(.setFormatter log-handler (\Amp\Log\ConsoleFormatter.))
+(.setFormatter log-handler (new \Amp\Log\ConsoleFormatter))
 
 (def logger (new \Monolog\Logger "server"))
 (.pushHandler logger log-handler)
@@ -39,7 +40,7 @@
 
 (defn complete "return list of completions for string" [what]
   (cond
-                                        ; If the thing to complete starts with php/, then return php completions.
+    ;; If the thing to complete starts with php/, then return php completions.
     (str/starts-with? what "php/")
     (let [what-to-complete (str/subs what 4)]  ; TODO Phel add subs fn
       (let [functions (php/get_defined_functions)
@@ -217,8 +218,7 @@
   (try
     (let [code-input (get request :code)
           form (read-string code-input)
-          macro-expander (MacroExpander.
-                          (GlobalEnvironment.))
+          macro-expander (new MacroExpander (GlobalEnvironment.))
           expanded-form (case
                             (:expander request)
                           "macroexpand-1"
@@ -254,7 +254,7 @@
    :eval        handle-eval
    ;; :forward-system-output
    ;; :interrupt
-   :load-file handle-load-file
+   :load-file   handle-load-file
    :lookup      handle-lookup
    ;; :ls-sessions
    ;; :stdin
@@ -311,12 +311,12 @@
 ;; Make ns form evaluating behave more like in stock REPL
 ;; https://github.com/phel-lang/phel-lang/pull/820/changes#diff-3f51b3b4f984bfefc881f9c4944d20cc95dab902e3ad85ca8e68acd21e73d9e6
 (.addDefinition (\Phel\Lang\Registry/getInstance)
-                (php/:: \Phel\Shared\CompilerConstants PHEL_CORE_NAMESPACE)
-                (php/:: \Phel\Shared\ReplConstants REPL_MODE)
+                \Phel\Shared\CompilerConstants/PHEL_CORE_NAMESPACE
+                \Phel\Shared\ReplConstants/REPL_MODE
                 true)
 
 (defn start-server []
-  (set! server (php/\Amp\Socket\listen (str server-address ":" port)))
+  (set! server (listen (str server-address ":" port)))
   (set! address (.getAddress @server))
   (loop []
     (when-let [socket (.accept @server)]
