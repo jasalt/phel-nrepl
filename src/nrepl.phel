@@ -40,7 +40,7 @@
   (cond
                                         ; If the thing to complete starts with php/, then return php completions.
     (str/starts-with? what "php/")
-    (let [what-to-complete (php/substr what 4)]  ; TODO Phel add subs fn
+    (let [what-to-complete (str/subs what 4)]  ; TODO Phel add subs fn
       (let [functions (php/get_defined_functions)
             internal-functions (get functions "internal")
             user-functions (get functions "user")
@@ -61,7 +61,7 @@
                            (partialr   ; discard internal AbstractFn classes
                             str/starts-with? "Phel\\Lang\\AbstractFn@anonymous"))
                           (php/get_declared_classes))
-          matches (filter (partialr str/starts-with? (php/substr what 1))
+          matches (filter (partialr str/starts-with? (str/subs what 1))
                           classes)
 
           ;; Add \ to the beginning of returned class names
