@@ -11,24 +11,25 @@
   (:use \Phel\Compiler\Application\MacroExpander)
   (:use \Phel\Compiler\Domain\Analyzer\Environment\GlobalEnvironment))
 
+(def get-stdout php/\Amp\ByteStream\getStdout)
 
 ;;;; Logging
 
-(def log-handler (\Amp\Log\StreamHandler. (php/amp\bytestream\getstdout)))
-(php/-> log-handler (setFormatter (\Amp\Log\ConsoleFormatter.)))
+(def log-handler (new \Amp\Log\StreamHandler (get-stdout)))
+(.setFormatter log-handler (\Amp\Log\ConsoleFormatter.))
 
-(def logger (\Monolog\Logger. "server"))
-(php/-> logger (pushHandler log-handler))
+(def logger (new \Monolog\Logger "server"))
+(.pushHandler logger log-handler)
 
 ;; http://seldaek.github.io/monolog/doc/01-usage.html
 (defn log-debug [s]
-  (php/-> logger (debug (str s))))
+  (.debug logger (str s)))
 (defn log-info [s]
-  (php/-> logger (info (str s))))
+  (.info logger (str s)))
 (defn log-warning [s]
-  (php/-> logger (warning (str s))))
+  (.warning logger (str s)))
 (defn log-error [s]
-  (php/-> logger (error (str s))))
+  (.error logger (str s)))
 
 
 ;;;; Operation logic
@@ -125,7 +126,7 @@
 (defn handle-describe [request send-fn]
   (send-fn request
            {:versions
-            {:phel (php/:: \Composer\InstalledVersions (getVersion "phel-lang/phel-lang"))
+            {:phel (\Composer\InstalledVersions/getVersion "phel-lang/phel-lang")
              :php (php/phpversion)}
             ;; Encoder sets {} as nil, so send :doc key ↓
             :ops (reduce (fn [acc x] (put acc x {:doc "Doc..."})) {} (keys ops))
@@ -222,10 +223,10 @@
                             (:expander request)
                           "macroexpand-1"
                           (do (log-debug (str "macroexpand-1 code: " code-input))
-                              (php/-> macro-expander (macroexpand1 form)))
+                              (.macroexpand1 macro-expander form))
                           ;; default
                           (do (log-debug (str "macroexpand code: " code-input))
-                              (php/-> macro-expander (macroexpand form))))
+                              (.macroexpand macro-expander form)))
           resp {:expansion (str expanded-form) :status ["done"]}]
       (send-fn request resp))
     (catch \Throwable e
@@ -283,7 +284,7 @@
         (log-debug (str "request: " _request))
         (log-debug (str "response: " response))
         ;; (log-debug (str "SENDING: " response-bencode))
-        (php/-> socket (write response-bencode)))
+        (.write socket response-bencode))
       (catch \Exception e
         (log-error (str "make-send-fn ERROR: " e))))))
 
@@ -309,25 +310,24 @@
 
 ;; Make ns form evaluating behave more like in stock REPL
 ;; https://github.com/phel-lang/phel-lang/pull/820/changes#diff-3f51b3b4f984bfefc881f9c4944d20cc95dab902e3ad85ca8e68acd21e73d9e6
-(php/-> (php/:: \Phel\Lang\Registry (getInstance))
-        (addDefinition
-         (php/:: \Phel\Shared\CompilerConstants PHEL_CORE_NAMESPACE)
-         (php/:: \Phel\Shared\ReplConstants REPL_MODE)
-         true))
+(.addDefinition (\Phel\Lang\Registry/getInstance)
+                (php/:: \Phel\Shared\CompilerConstants PHEL_CORE_NAMESPACE)
+                (php/:: \Phel\Shared\ReplConstants REPL_MODE)
+                true)
 
 (defn start-server []
-  (set! server (php/amp\socket\listen (str server-address ":" port)))
-  (set! address (php/-> @server (getAddress)))
+  (set! server (php/\Amp\Socket\listen (str server-address ":" port)))
+  (set! address (.getAddress @server))
   (loop []
-    (when-let [socket (php/-> @server (accept))]
+    (when-let [socket (.accept @server)]
       (async (log-info (str "accepted connection from " address))
         (loop [send-fn (make-send-fn socket)]
-          (when-let [chunk (php/rtrim (php/-> socket (read)))]
+          (when-let [chunk (php/rtrim (.read socket))]
             (try
               ;; (log-debug (str "RECEIVED: " chunk))
               (handle-request (bencode-decode chunk) send-fn)
               (catch
                   \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
             (recur send-fn)))
-        (php/-> socket (end)))
+        (.end socket))
       (recur))))
