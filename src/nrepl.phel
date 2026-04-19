@@ -1,5 +1,5 @@
 (ns phel-nrepl\nrepl
-  (:require phel\str :as str)
+  (:require phel\string :as str)
   (:require phel\repl)
   (:require phel-nrepl\util :refer [callable->closure
                                     partialr
