@@ -1,8 +1,8 @@
 (ns phel-nrepl\nrepl
   (:require phel\string :as str)
   (:require phel\repl)
-  (:require phel-nrepl\util :refer [callable->closure
-                                    partialr
+  (:require phel\async :refer [async])
+  (:require phel-nrepl\util :refer [partialr
                                     all-phel-def-names
                                     apropos
                                     bencode-decode
@@ -142,9 +142,7 @@
 (defn handle-eval [request send-fn]
   (let [code-input (get request :code)
         _ (log-debug code-input)]
-    (php/amp\async
-     (callable->closure
-      (fn []
+    (async
         (try
           (let [last-result (repl/eval-str code-input)
                 shown (try (str last-result)
@@ -154,7 +152,7 @@
           (catch \Throwable e
             (log-error (str "eval error: " e))
             (set! last-stacktrace e)
-            (send-fn request {:ex (str e) :status ["error" "eval-error"]}))))))))
+            (send-fn request {:ex (str e) :status ["error" "eval-error"]}))))))
 
 ;; d4:code7:(+ 1 1)2:op4:evale
 
@@ -322,18 +320,14 @@
   (set! address (php/-> @server (getAddress)))
   (loop []
     (when-let [socket (php/-> @server (accept))]
-      (php/amp\async
-       (callable->closure  ;; makes Phel anonymous fn compatible with AMPHP
-        (fn []
-          (log-info (str "accepted connection from " address))
-          (loop [send-fn (make-send-fn socket)]
-            (when-let [chunk (php/rtrim (php/-> socket (read)))]
-              (try
-                ;; (log-debug (str "RECEIVED: " chunk))
-                (handle-request (bencode-decode chunk) send-fn)
-                (catch
-                    \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
-              (recur send-fn)))
-          (php/-> socket (end)))))
-      (recur)))
-  )
+      (async (log-info (str "accepted connection from " address))
+        (loop [send-fn (make-send-fn socket)]
+          (when-let [chunk (php/rtrim (php/-> socket (read)))]
+            (try
+              ;; (log-debug (str "RECEIVED: " chunk))
+              (handle-request (bencode-decode chunk) send-fn)
+              (catch
+                  \Exception e (log-error (str "UNKNOWN HANDLING ERROR: " e))))
+            (recur send-fn)))
+        (php/-> socket (end)))
+      (recur))))
