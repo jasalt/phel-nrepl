@@ -25,7 +25,6 @@
 
 (defn get-runfacade [] (get-backtrace-object "Phel\\Run\\RunFacade"))
 
-
 ;; NOTE: this is modified
 (def- src-dirs (to-php-array
                 (apply (partial vector "/home/user/dev/phel/phel-nrepl/src")  ; TODO is first item here needed?
@@ -192,3 +191,137 @@
                          (apply (partial vector "/home/user/dev/phel-nrepl/src")
                                          (php/-> (get-runfacade) (getAllPhelDirectories)))))
   )
+
+
+;;;;; Unused utility / diagnostics functions
+;; (apropos "array")
+
+;; TODO separate what is used by nrepl.phel and what for diagnosing it's behavior
+;; TODO cleanup deprecated code
+
+(defn dd
+  "Dump and die."
+  [x]
+  (println x)(php/die))
+
+(defn get-from-list [xs key default & [split]]
+  (let [arg (find |(php/str_contains (or $ "") key) xs)]
+    (if (empty? arg)
+      default
+      (php/intval (get (php/explode (or split "=") arg) 1)))))
+
+(defn phel-compile [s]
+  "deprecated"
+  (let [cf (php/new \Phel\Compiler\CompilerFacade)
+        opts (php/new \Phel\Compiler\Infrastructure\CompileOptions)
+        res (php/-> cf (compile s opts))]
+    (php/-> res (getPhpCode))))
+
+
+(defn namespaces-list []
+  "deprecated"
+  (php/array_keys (registry-definitions)))
+
+; (namespaces-list)
+
+(defn namespace-definitions [namespace]
+  (-> (registry-definitions)
+     (php/aget namespace)
+     (php/array_keys)))
+
+; (count (namespace-definitions "phel\core"))
+; (count (->> (registry-definitions) (php/array_values) (mapcat php/array_keys)))
+
+(defn- ilt-kind-of [type]
+  type)
+
+
+; Functions used for generating tables for completions
+
+(defn all-php-def-names []
+  (let [functions (php/get_defined_functions)
+        internal-functions (get functions "internal")
+        user-functions (get functions "external")]
+    (map str (concat internal-functions user-functions))))
+
+;; (all-php-def-names)
+;; type: function, variable, namespace
+
+; (compile '(defn foo [x] x))
+
+
+(defn- definition-properties [id properties]
+  (cond
+   ;; php defs
+   (php/str_starts_with id "php/")
+   (let [php-name (str/subs id 4)]
+     (if (php/function_exists php-name)
+       (make-definition php-name "function" "function")
+       {}))
+
+   ;; phel defs
+   (some? (partial = id) (all-phel-def-names))
+   (make-definition id "function" "function")
+
+   ;; default
+   {}))
+
+;; (definition-properties "str" [])
+
+(defn- find-functions [name]
+  (cond
+    ; php defs
+   (php/str_starts_with name "php/")
+   (let [php-name (str/subs name 4)]
+     (if (php/function_exists php-name)
+       [(make-definition php-name "function" "function")]
+       []))
+
+   ;; phel defs
+   (some? (partial = name) (all-phel-def-names))
+   [(make-definition name "function" "function")]
+
+   ;; otherwise
+   []))
+
+;; (find-functions "php/array_merge")
+;; (find-functions "str")
+;; (find-functions "lala")
+
+(defn- find-variables [name]
+  [])
+
+(defn- find-definitions [name type] ;; TODO
+  (concat
+   (if (or (not type)
+           (= type "function"))
+     (find-functions name)
+     [])
+   (if (or (not type)
+           (= type "variable"))
+     (find-variables name)
+     [])))
+
+;; (find-definitions "php/array_merge" "function")
+;; (find-definitions "php/array_merges" "function")
+;; (find-definitions "lala" "function")
+;; (find-definitions "php/array_merge" nil)
+;; (find-definitions "str" nil)
+
+;;;;; Debug utilities
+
+(defn get-global-env [] (\Phel\Compiler\Infrastructure\GlobalEnvironmentSingleton/getInstance))
+
+(defn get-registry [] (\Phel\Lang\Registry/getInstance))
+
+;; TODO duplicated functionality in read-php-obj-prop
+(defn get-instance-private-property [instance property]
+  (let [refprop (new \ReflectionProperty (php/:: instance class) property)]
+    (.setAccessible refprop true)
+    (.getValue refprop instance)))
+
+;; TODO deprecated by phel\repl ns-publics ns-refers ns-aliases
+(defn set-instance-private-property [instance property value]
+  (let [refprop (new \ReflectionProperty (php/:: instance class) property)]
+    (.setAccessible refprop true)
+    (.setValue refprop instance value)))
