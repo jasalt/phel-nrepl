@@ -1,3 +1,11 @@
+NOTE: see nREPL server that Phel provides out-of-the-box since https://github.com/phel-lang/phel-lang/pull/1507
+
+```
+./vendor/bin/phel nrepl
+```
+
+My implementation predates it and has some issues, while there's couple extra features at the moment too in progress to be implemented in Phel's built-in nrepl.
+
 # Phel-nrepl (WIP)
 
 `Status: pre-alpha`
